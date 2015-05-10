@@ -28,3 +28,4 @@ trait Enum { //DIY enum type
 
   def values: Vector[EnumVal] = _values.get //Here you can get all the enums that exist for this type
 }
+

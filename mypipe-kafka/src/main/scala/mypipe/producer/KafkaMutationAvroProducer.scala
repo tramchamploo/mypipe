@@ -1,8 +1,7 @@
 package mypipe.producer
 
 import java.nio.ByteBuffer
-
-import mypipe.api._
+import mypipe.util.ListOps._
 import mypipe.api.event.{ Serializer, Mutation }
 import mypipe.api.producer.Producer
 import mypipe.avro.Guid
@@ -60,7 +59,7 @@ abstract class KafkaMutationAvroProducer[SchemaId](config: Config)
    */
   protected def schemaIdToByteArray(schemaId: SchemaId): Array[Byte]
 
-  /** Given a Mutation, this method must convert it into a(n) Avro record(s)
+  /** Given a Mutation, this method must convert it into an Avro record(s)
    *  for the given Avro schema.
    *
    *  @param mutation
@@ -128,21 +127,16 @@ abstract class KafkaMutationAvroProducer[SchemaId](config: Config)
     out.toByteArray
   }
 
+  private def logAndAbort[T](records: List[T], record: T) = {
+    logger.error("Failed to queue list {} because of entry {}", records, record)
+    false
+  }
+
   override def queueList(inputList: List[Mutation]): Boolean = {
-    inputList.foreach(input ⇒ {
-      val schemaTopic = avroSchemaSubject(input)
-      val mutationType = magicByte(input)
-      val schema = schemaRepoClient.getLatestSchema(schemaTopic).get
-      val schemaId = schemaRepoClient.getSchemaId(schemaTopic, schema)
-      val records = avroRecord(input, schema)
-
-      records foreach (record ⇒ {
-        val bytes = serialize(record, schema, schemaId.get, mutationType)
-        producer.send(getKafkaTopic(input), bytes)
-      })
-    })
-
-    true
+    processList[Mutation](
+      list = inputList,
+      op = queue,
+      onError = logAndAbort)
   }
 
   override def queue(input: Mutation): Boolean = {
@@ -153,14 +147,18 @@ abstract class KafkaMutationAvroProducer[SchemaId](config: Config)
       val schemaId = schemaRepoClient.getSchemaId(schemaTopic, schema)
       val records = avroRecord(input, schema)
 
-      records foreach (record ⇒ {
-        val bytes = serialize(record, schema, schemaId.get, mutationType)
-        producer.send(getKafkaTopic(input), bytes)
-      })
+        def serializeAndQueue(record: GenericData.Record): Boolean = {
+          val bytes = serialize(record, schema, schemaId.get, mutationType)
+          producer.queue(getKafkaTopic(input), bytes)
+        }
 
-      true
+      processList[GenericData.Record](
+        list = records,
+        op = serializeAndQueue,
+        onError = logAndAbort)
+
     } catch {
-      case e: Exception ⇒ logger.error(s"failed to queue: ${e.getMessage}\n${e.getStackTraceString}"); false
+      case e: Exception ⇒ logger.error("Failed to queue: {}\n{}", e.getMessage, e.getStackTrace.mkString("\n")); false
     }
   }
 

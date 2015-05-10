@@ -2,6 +2,7 @@ package mypipe.api.consumer
 
 import java.util.UUID
 
+import mypipe.util.ListOps._
 import mypipe.api._
 import com.fasterxml.uuid.{ EthernetAddress, Generators }
 
@@ -172,26 +173,6 @@ abstract class AbstractBinaryLogConsumer[BinaryLogEvent, BinaryLogPosition] exte
     } else {
       false
     }
-  }
-
-  // TODO: move this to a util
-  def processList[T](list: List[T],
-                     op: (T) ⇒ Boolean,
-                     onError: (List[T], T) ⇒ Boolean): Boolean = {
-
-    list.forall(item ⇒ {
-      val res = try { op(item) } catch {
-        case e: Exception ⇒
-          log.error("Unhandled exception while processing list", e)
-          onError(list, item)
-      }
-
-      if (!res) {
-        // fail-fast if the error handler returns false
-        onError(list, item)
-      } else true
-
-    })
   }
 
   private def updateBinaryLogPosition(): Boolean = {
