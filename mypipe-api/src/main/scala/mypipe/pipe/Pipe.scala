@@ -15,38 +15,16 @@ import scala.concurrent.duration._
 
 case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], producer: Producer) {
 
-  object State extends Enum {
-
-    sealed trait EnumVal extends Value
-
-    val STOPPED = new EnumVal {
-      val value = 0
-    }
-
-    val STARTING = new EnumVal {
-      val value = 1
-    }
-
-    val STARTED = new EnumVal {
-      val value = 2
-    }
-
-    val CRASHED = new EnumVal {
-      val value = 3
-    }
-  }
-
   protected val log = LoggerFactory.getLogger(getClass)
-  protected var state = State.STOPPED
+  var state = State.STOPPED
   protected var CONSUMER_DISCONNECT_WAIT_SECS = 2
   protected val system = ActorSystem("mypipe")
   implicit val ec = system.dispatcher
 
   @volatile protected var _connected: Boolean = false
   protected var flusher: Option[Cancellable] = None
+  protected val binlogPositionSaver = BinlogPositionSaver()
   protected val listener = new BinaryLogConsumerListener[BinaryLogEvent, BinaryLogPosition]() {
-
-    val binlogPositionSaver = BinlogPositionSaver()
 
     override def onStart(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
       log.info(s"Pipe $id connected!")
@@ -122,6 +100,35 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
     }
   }
 
+  def loadPosition() {
+    // TODO: this is an ugly hack, make it generic
+    if (consumer.isInstanceOf[MySQLBinaryLogConsumer]) {
+      val binlogFileAndPos = binlogPositionSaver.binlogLoadFilePosition(consumer.id, pipeName = id)
+        .getOrElse(BinaryLogFilePosition.current)
+      consumer.asInstanceOf[MySQLBinaryLogConsumer].setBinaryLogPosition(binlogFileAndPos)
+    }
+  }
+
   override def toString: String = id
 }
 
+object State extends Enum {
+
+  sealed trait EnumVal extends Value
+
+  val STOPPED = new EnumVal {
+    val value = 0
+  }
+
+  val STARTING = new EnumVal {
+    val value = 1
+  }
+
+  val STARTED = new EnumVal {
+    val value = 2
+  }
+
+  val CRASHED = new EnumVal {
+    val value = 3
+  }
+}

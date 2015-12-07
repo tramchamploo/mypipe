@@ -1,19 +1,18 @@
 package mypipe.runner
 
-import mypipe.api.binlog.BinlogPositionSaver
+import com.typesafe.config.{ Config, ConfigFactory }
+import mypipe.api.Conf
 import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
-import mypipe.mysql.{ MySQLBinaryLogConsumer, BinaryLogFilePosition }
-import mypipe.pipe.Pipe
+import mypipe.mysql.MySQLBinaryLogConsumer
+import mypipe.pipe.{ State, Pipe }
+import org.apache.curator.framework.recipes.leader.{ CancelLeadershipException, LeaderSelector, LeaderSelectorListener }
+import org.apache.curator.framework.state.ConnectionState
 import org.apache.curator.framework.{ CuratorFramework, CuratorFrameworkFactory }
-import org.apache.curator.framework.recipes.leader.{ LeaderSelectorListenerAdapter, LeaderSelector }
 import org.apache.curator.retry.RetryUntilElapsed
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
-import mypipe.api.Conf
-import com.typesafe.config.ConfigFactory
-import com.typesafe.config.Config
-import org.slf4j.LoggerFactory
 
 object PipeRunner extends App {
 
@@ -30,36 +29,39 @@ object PipeRunner extends App {
   val zkClient = CuratorFrameworkFactory.newClient(conf.getString("mypipe.zk.conn"),
     new RetryUntilElapsed(Option(conf.getInt("mypipe.zk.max-retry-seconds")).getOrElse(20) * 1000, 1000))
 
+  val pipes: Seq[Pipe[_, _]] = createPipes(conf, "mypipe.pipes", producers, consumers)
 
-  val leaderSelectorAdaptor = new LeaderSelectorListenerAdapter {
-
-    override def takeLeadership(client: CuratorFramework): Unit = {
-
-      log.info("Taking leadership and creating pipes...")
-
-      val pipes: Seq[Pipe[_, _]] = createPipes(conf, "mypipe.pipes", producers, consumers)
-
-      if (pipes.isEmpty) {
-        log.info("No pipes defined, exiting.")
-        sys.exit()
-      }
-
-      sys.addShutdownHook({
-        log.info("Shutting down...")
-        pipes.foreach(_.disconnect())
-      })
-
-      log.info(s"Connecting ${pipes.size} pipes...")
-      pipes.foreach(_.connect())
-
-    }
+  if (pipes.isEmpty) {
+    log.info("No pipes defined, exiting.")
+    sys.exit()
   }
 
-  val leaderSelector = new LeaderSelector(zkClient, LEADER_PATH, leaderSelectorAdaptor)
+  sys.addShutdownHook({
+    log.info("Shutting down...")
+    pipes.foreach(_.disconnect())
+  })
+
+  val leaderSelectorListener = new LeaderSelectorListener {
+
+    override def takeLeadership(client: CuratorFramework): Unit =
+      pipes.filter(p ⇒ !p.isConnected && p.state != State.STARTING).foreach { p ⇒
+        log.info(s"Connecting pipe [{}]...", p)
+        p.loadPosition()
+        p.connect()
+      }
+
+    override def stateChanged(client: CuratorFramework, newState: ConnectionState): Unit =
+      if ((newState eq ConnectionState.SUSPENDED) || (newState eq ConnectionState.LOST)) {
+        log.info("Zookeeper connection lost, shutting down...")
+        pipes.foreach(_.disconnect())
+        throw new CancelLeadershipException
+      }
+  }
+
+  val leaderSelector = new LeaderSelector(zkClient, LEADER_PATH, leaderSelectorListener)
   leaderSelector.autoRequeue()
 
   zkClient.start()
-
   leaderSelector.start()
 
 }
@@ -67,8 +69,6 @@ object PipeRunner extends App {
 object PipeRunnerUtil {
 
   protected val log = LoggerFactory.getLogger(getClass)
-
-  private val binlogPositionSaver = BinlogPositionSaver()
 
   def loadProducerClasses(conf: Config, key: String): Map[String, Option[Class[Producer]]] =
     Conf.loadClassesForKey[Producer](key)
@@ -114,15 +114,7 @@ object PipeRunnerUtil {
       // config allows for multiple consumers, we only take the first one
       val consumerInstance = {
         val c = consumersConf.head
-        val consumer = createConsumer(pipeName = name, consumerConfigs.head)
-
-        // TODO: this is an ugly hack, make it generic
-        if (consumer.isInstanceOf[MySQLBinaryLogConsumer]) {
-          val binlogFileAndPos = binlogPositionSaver.binlogLoadFilePosition(consumer.id, pipeName = name).getOrElse(BinaryLogFilePosition.current)
-          consumer.asInstanceOf[MySQLBinaryLogConsumer].setBinaryLogPosition(binlogFileAndPos)
-        }
-
-        consumer
+        createConsumer(pipeName = name, consumerConfigs.head)
       }
 
       // the following hack assumes a single producer per pipe
