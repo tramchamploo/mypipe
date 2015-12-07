@@ -48,56 +48,6 @@ object Conf {
 
   val MYSQL_SERVER_ID_PREFIX = conf.getInt("mypipe.mysql-server-id-prefix")
 
-  private val lastBinlogFilePos = scala.collection.concurrent.TrieMap[String, BinaryLogFilePosition]()
-
-  try {
-    new File(DATADIR).mkdirs()
-    new File(LOGDIR).mkdirs()
-  } catch {
-    case e: Exception ⇒ println(s"Error while creating data and log dir $DATADIR, $LOGDIR: ${e.getMessage}")
-  }
-
-  def binlogGetStatusFilename(consumerId: String, pipe: String): String = {
-    s"$DATADIR/$pipe-$consumerId.pos"
-  }
-
-  def binlogLoadFilePosition(consumerId: String, pipeName: String): Option[BinaryLogFilePosition] = {
-    try {
-
-      val statusFile = binlogGetStatusFilename(consumerId, pipeName)
-      val filePos = scala.io.Source.fromFile(statusFile).getLines().mkString.split(":")
-      Some(BinaryLogFilePosition(filePos(0), filePos(1).toLong))
-
-    } catch {
-      case e: Exception ⇒ None
-    }
-  }
-
-  def binlogSaveFilePosition(consumerId: String, filePos: BinaryLogFilePosition, pipe: String): Boolean = {
-
-    try {
-      val fileName = binlogGetStatusFilename(consumerId, pipe)
-
-      if (!lastBinlogFilePos.getOrElse(fileName, "").equals(filePos)) {
-
-        val file = new File(fileName)
-        val writer = new PrintWriter(file)
-
-        log.info(s"Saving binlog position for pipe $pipe/$consumerId -> $filePos")
-        writer.write(s"${filePos.filename}:${filePos.pos}")
-        writer.close()
-
-        lastBinlogFilePos(fileName) = filePos
-      }
-
-      true
-    } catch {
-      case e: Exception ⇒
-        log.error(s"Failed saving binary log position $filePos for consumer $consumerId and pipe $pipe: ${e.getMessage}\n${e.getStackTraceString}")
-        false
-    }
-  }
-
   def loadClassesForKey[T](key: String): Map[String, Option[Class[T]]] = {
     val classes = Conf.conf.getObject(key).asScala
     classes.map(kv ⇒ {

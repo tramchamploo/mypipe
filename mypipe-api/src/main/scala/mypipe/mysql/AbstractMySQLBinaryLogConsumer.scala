@@ -36,8 +36,9 @@ abstract class AbstractMySQLBinaryLogConsumer
     s"$hostname-$port"
   }
 
-  override def getBinaryLogPosition: Option[BinaryLogFilePosition] = {
-    Some(BinaryLogFilePosition(client.getBinlogFilename, client.getBinlogPosition))
+  override def getBinaryLogPosition: Option[BinaryLogFilePosition] = Option(client.getBinlogFilename) match {
+    case Some(filename) => Some(BinaryLogFilePosition(filename, client.getBinlogPosition))
+    case _ => None
   }
 
   override protected def decodeEvent(event: MEvent): Option[Event] = {
@@ -157,19 +158,19 @@ abstract class AbstractMySQLBinaryLogConsumer
       val evData = event.getData[WriteRowsEventData]()
       // FIXME: handle table being None
       val table = findTable(evData.getTableId).get
-      InsertMutation(table, createRows(table, evData.getRows))
+      InsertMutation(table, createRows(table, evData.getRows), event.getHeader[EventHeader].getTimestamp)
 
     case eventType if EventType.isUpdate(eventType) ⇒
       val evData = event.getData[UpdateRowsEventData]()
       // FIXME: handle table being None
       val table = findTable(evData.getTableId).get
-      UpdateMutation(table, createRowsUpdate(table, evData.getRows))
+      UpdateMutation(table, createRowsUpdate(table, evData.getRows), event.getHeader[EventHeader].getTimestamp)
 
     case eventType if EventType.isDelete(eventType) ⇒
       val evData = event.getData[DeleteRowsEventData]()
       // FIXME: handle table being None
       val table = findTable(evData.getTableId).get
-      DeleteMutation(table, createRows(table, evData.getRows))
+      DeleteMutation(table, createRows(table, evData.getRows), event.getHeader[EventHeader].getTimestamp)
   }
 
   protected def createRows(table: Table, evRows: java.util.List[Array[java.io.Serializable]]): List[Row] = {

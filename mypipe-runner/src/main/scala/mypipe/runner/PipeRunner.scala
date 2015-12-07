@@ -1,5 +1,6 @@
 package mypipe.runner
 
+import mypipe.api.binlog.BinlogPositionSaver
 import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
 import mypipe.mysql.{ MySQLBinaryLogConsumer, BinaryLogFilePosition }
@@ -39,6 +40,8 @@ object PipeRunner extends App {
 object PipeRunnerUtil {
 
   protected val log = LoggerFactory.getLogger(getClass)
+
+  private val binlogPositionSaver = BinlogPositionSaver()
 
   def loadProducerClasses(conf: Config, key: String): Map[String, Option[Class[Producer]]] =
     Conf.loadClassesForKey[Producer](key)
@@ -88,7 +91,7 @@ object PipeRunnerUtil {
 
         // TODO: this is an ugly hack, make it generic
         if (consumer.isInstanceOf[MySQLBinaryLogConsumer]) {
-          val binlogFileAndPos = Conf.binlogLoadFilePosition(consumer.id, pipeName = name).getOrElse(BinaryLogFilePosition.current)
+          val binlogFileAndPos = binlogPositionSaver.binlogLoadFilePosition(consumer.id, pipeName = name).getOrElse(BinaryLogFilePosition.current)
           consumer.asInstanceOf[MySQLBinaryLogConsumer].setBinaryLogPosition(binlogFileAndPos)
         }
 

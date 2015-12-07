@@ -1,6 +1,7 @@
 package mypipe.pipe
 
 import akka.actor.{ ActorSystem, Cancellable }
+import mypipe.api.binlog.BinlogPositionSaver
 import mypipe.api.consumer.{ BinaryLogConsumer, BinaryLogConsumerListener }
 import mypipe.api.event.{ AlterEvent, Mutation }
 import mypipe.api.Conf
@@ -45,6 +46,8 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
   protected var flusher: Option[Cancellable] = None
   protected val listener = new BinaryLogConsumerListener[BinaryLogEvent, BinaryLogPosition]() {
 
+    val binlogPositionSaver = BinlogPositionSaver()
+
     override def onStart(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
       log.info(s"Pipe $id connected!")
 
@@ -59,7 +62,7 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
       val binlogPos = consumer.getBinaryLogPosition
       // TODO: we should be able to generically save the binary log position
       if (producer.flush() && binlogPos.isDefined && binlogPos.get.isInstanceOf[BinaryLogFilePosition]) {
-        Conf.binlogSaveFilePosition(consumer.id, binlogPos.get.asInstanceOf[BinaryLogFilePosition], id)
+        binlogPositionSaver.binlogSaveFilePosition(consumer.id, binlogPos.get.asInstanceOf[BinaryLogFilePosition], id)
       } else {
         if (binlogPos.isDefined)
           log.error(s"Producer ($producer) failed to flush, not saving binary log position: $binlogPos for consumer $consumer.")
