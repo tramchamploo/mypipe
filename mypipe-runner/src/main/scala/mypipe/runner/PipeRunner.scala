@@ -44,10 +44,14 @@ object PipeRunner extends App {
   val leaderSelectorListener = new LeaderSelectorListener {
 
     override def takeLeadership(client: CuratorFramework): Unit =
-      pipes.filter(p ⇒ !p.isConnected && p.state != State.STARTING).foreach { p ⇒
-        log.info(s"Connecting pipe [{}]...", p)
-        p.loadPosition()
-        p.connect()
+      while (true) {
+        pipes.filter(p ⇒ !p.isConnected && p.state != State.STARTING).foreach { p ⇒
+          log.info(s"Connecting pipe [{}]...", p)
+          p.loadPosition()
+          p.connect()
+        }
+
+        Thread.sleep(1000)
       }
 
     override def stateChanged(client: CuratorFramework, newState: ConnectionState): Unit =
