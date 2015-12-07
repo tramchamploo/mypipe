@@ -37,8 +37,8 @@ abstract class AbstractMySQLBinaryLogConsumer
   }
 
   override def getBinaryLogPosition: Option[BinaryLogFilePosition] = Option(client.getBinlogFilename) match {
-    case Some(filename) => Some(BinaryLogFilePosition(filename, client.getBinlogPosition))
-    case _ => None
+    case Some(filename) ⇒ Some(BinaryLogFilePosition(filename, client.getBinlogPosition))
+    case _              ⇒ None
   }
 
   override protected def decodeEvent(event: MEvent): Option[Event] = {

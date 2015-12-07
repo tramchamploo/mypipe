@@ -23,7 +23,7 @@ case class SelectEvent(database: String, table: String, rows: Seq[Seq[Any]]) ext
 case class ShowMasterStatusEvent(filePosition: BinaryLogFilePosition) extends SnapshotterEvent
 
 class SelectConsumer(override val config: Config)
-  extends BinaryLogConsumer[SelectEvent, BinaryLogFilePosition]
+    extends BinaryLogConsumer[SelectEvent, BinaryLogFilePosition]
     with ConfigBasedErrorHandlingBehaviour[SelectEvent, BinaryLogFilePosition]
     with ConfigBasedEventSkippingBehaviour
     with CacheableTableMapBehaviour
@@ -49,10 +49,10 @@ class SelectConsumer(override val config: Config)
   }
 
   /** Given a third-party BinLogEvent, this method decodes it to an
-    *  mypipe specific Event type if it recognizes it.
-    *  @param event the event to decode
-    *  @return the decoded Event or None
-    */
+   *  mypipe specific Event type if it recognizes it.
+   *  @param event the event to decode
+   *  @return the decoded Event or None
+   */
   override protected def decodeEvent(event: SelectEvent): Option[Event] = {
     val rowData = event.rows.map(_.map(_.asInstanceOf[java.io.Serializable]).toArray).toList.asJava
     getTable(event.database, event.table) match {
@@ -79,13 +79,13 @@ class SelectConsumer(override val config: Config)
   }
 
   /** Gets the consumer's current position in the binary log.
-    *  @return current BinLogPos
-    */
+   *  @return current BinLogPos
+   */
   override def getBinaryLogPosition: Option[BinaryLogFilePosition] = binlogPos
 
   /** Gets this consumer's unique ID.
-    *  @return Unique ID as a string.
-    */
+   *  @return Unique ID as a string.
+   */
   override def id: String = s"select-consumer-$hostname-$port"
 
   override protected def onStop(): Unit = Unit

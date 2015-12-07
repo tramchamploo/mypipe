@@ -5,8 +5,8 @@ import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
 import mypipe.mysql.{ MySQLBinaryLogConsumer, BinaryLogFilePosition }
 import mypipe.pipe.Pipe
-import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
-import org.apache.curator.framework.recipes.leader.{LeaderSelectorListenerAdapter, LeaderSelector}
+import org.apache.curator.framework.{ CuratorFramework, CuratorFrameworkFactory }
+import org.apache.curator.framework.recipes.leader.{ LeaderSelectorListenerAdapter, LeaderSelector }
 import org.apache.curator.retry.RetryUntilElapsed
 
 import scala.collection.JavaConverters._

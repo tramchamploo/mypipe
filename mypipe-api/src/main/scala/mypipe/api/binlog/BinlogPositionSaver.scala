@@ -1,6 +1,6 @@
 package mypipe.api.binlog
 
-import java.io.{File, PrintWriter}
+import java.io.{ File, PrintWriter }
 
 import com.typesafe.config.ConfigFactory
 import mypipe.mysql.BinaryLogFilePosition
@@ -8,11 +8,10 @@ import org.apache.curator.framework.CuratorFrameworkFactory
 import org.apache.curator.retry.RetryUntilElapsed
 import org.slf4j.LoggerFactory
 
-import scala.util.{Success, Failure, Try}
+import scala.util.{ Success, Failure, Try }
 
-/**
-  * Created by tramchamploo on 15/12/3.
-  */
+/** Created by tramchamploo on 15/12/3.
+ */
 trait BinlogPositionSaver {
 
   protected val conf = ConfigFactory.load()
@@ -28,8 +27,8 @@ object BinlogPositionSaver {
   val conf = ConfigFactory.load()
 
   def apply() = conf.getString("mypipe.pos-saver") match {
-    case "mypipe.api.binlog.ZookeeperBinlogPositionSaver" => ZookeeperBinlogPositionSaver
-    case _                                                => FileBinlogPositionSaver
+    case "mypipe.api.binlog.ZookeeperBinlogPositionSaver" ⇒ ZookeeperBinlogPositionSaver
+    case _ ⇒ FileBinlogPositionSaver
   }
 
 }
@@ -142,9 +141,9 @@ object ZookeeperBinlogPositionSaver extends BinlogPositionSaver {
       lastBinlogFilePos(path) = filePos
     }
   } match {
-    case Success(_) => true
+    case Success(_) ⇒ true
 
-    case Failure(e) =>
+    case Failure(e) ⇒
       log.error(s"Failed saving binary log position $filePos for consumer $consumerId and pipe $pipe: ", e)
       false
   }

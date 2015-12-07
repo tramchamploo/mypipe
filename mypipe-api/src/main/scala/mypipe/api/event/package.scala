@@ -34,7 +34,7 @@ package object event {
    *
    *  @param table that the row belongs to
    */
-  sealed abstract class Mutation(override val table: Table, val txid: UUID, val timestamp: Long) extends TableContainingEvent {
+  sealed abstract class Mutation(override val table: Table, val txid: UUID, val timestamp: java.lang.Long) extends TableContainingEvent {
     // TODO: populate this field
     val sql = ""
     val database = table.db
@@ -49,7 +49,7 @@ package object event {
   abstract class SingleValuedMutation(
     override val table: Table,
     val rows: List[Row],
-    override val timestamp: Long,
+    override val timestamp: java.lang.Long,
     override val txid: UUID = null)
       extends Mutation(table, txid, timestamp)
 
@@ -71,7 +71,7 @@ package object event {
   case class InsertMutation(
     override val table: Table,
     override val rows: List[Row],
-    override val timestamp: Long,
+    override val timestamp: java.lang.Long,
     override val txid: UUID = null)
       extends SingleValuedMutation(table, rows, timestamp, txid) {
 
@@ -87,7 +87,7 @@ package object event {
   case class UpdateMutation(
     override val table: Table,
     rows: List[(Row, Row)],
-    override val timestamp: Long,
+    override val timestamp: java.lang.Long,
     override val txid: UUID = null)
       extends Mutation(table, txid, timestamp) {
 
@@ -104,7 +104,7 @@ package object event {
   case class DeleteMutation(
     override val table: Table,
     override val rows: List[Row],
-    override val timestamp: Long,
+    override val timestamp: java.lang.Long,
     override val txid: UUID = null)
       extends SingleValuedMutation(table, rows, timestamp, txid) {
 
