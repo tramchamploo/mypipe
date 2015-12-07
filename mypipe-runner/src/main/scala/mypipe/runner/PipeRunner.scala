@@ -5,6 +5,9 @@ import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
 import mypipe.mysql.{ MySQLBinaryLogConsumer, BinaryLogFilePosition }
 import mypipe.pipe.Pipe
+import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
+import org.apache.curator.framework.recipes.leader.{LeaderSelectorListenerAdapter, LeaderSelector}
+import org.apache.curator.retry.RetryUntilElapsed
 
 import scala.collection.JavaConverters._
 import mypipe.api.Conf
@@ -19,22 +22,41 @@ object PipeRunner extends App {
   protected val log = LoggerFactory.getLogger(getClass)
   protected val conf = ConfigFactory.load()
 
+  val LEADER_PATH = conf.getString("mypipe.zk.leader-path")
+
   lazy val producers: Map[String, Option[Class[Producer]]] = loadProducerClasses(conf, "mypipe.producers")
   lazy val consumers: Seq[(String, Config, Option[Class[BinaryLogConsumer[_, _]]])] = loadConsumerConfigs(conf, "mypipe.consumers")
-  lazy val pipes: Seq[Pipe[_, _]] = createPipes(conf, "mypipe.pipes", producers, consumers)
 
-  if (pipes.isEmpty) {
-    log.info("No pipes defined, exiting.")
-    sys.exit()
+  val zkClient = CuratorFrameworkFactory.newClient(conf.getString("mypipe.zk.conn"),
+    new RetryUntilElapsed(Option(conf.getInt("mypipe.zk.max-retry-seconds")).getOrElse(20) * 1000, 1000))
+
+  val leaderSelectorAdaptor = new LeaderSelectorListenerAdapter {
+
+    override def takeLeadership(client: CuratorFramework): Unit = {
+
+      log.info("Taking leadership and creating pipes...")
+
+      val pipes: Seq[Pipe[_, _]] = createPipes(conf, "mypipe.pipes", producers, consumers)
+
+      if (pipes.isEmpty) {
+        log.info("No pipes defined, exiting.")
+        sys.exit()
+      }
+
+      sys.addShutdownHook({
+        log.info("Shutting down...")
+        pipes.foreach(_.disconnect())
+      })
+
+      log.info(s"Connecting ${pipes.size} pipes...")
+      pipes.foreach(_.connect())
+    }
   }
 
-  sys.addShutdownHook({
-    log.info("Shutting down...")
-    pipes.foreach(_.disconnect())
-  })
+  val leaderSelector = new LeaderSelector(zkClient, LEADER_PATH, leaderSelectorAdaptor)
 
-  log.info(s"Connecting ${pipes.size} pipes...")
-  pipes.foreach(_.connect())
+  zkClient.start()
+
 }
 
 object PipeRunnerUtil {

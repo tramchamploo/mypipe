@@ -32,7 +32,8 @@ lazy val apiDependencies = Seq(
 )
 
 lazy val runnerDependencies = Seq(
-  typesafeConfig
+  typesafeConfig,
+  curator
 )
 
 lazy val snapshotterDependencies = Seq(
