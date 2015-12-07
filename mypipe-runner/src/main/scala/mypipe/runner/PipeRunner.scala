@@ -30,7 +30,6 @@ object PipeRunner extends App {
   val zkClient = CuratorFrameworkFactory.newClient(conf.getString("mypipe.zk.conn"),
     new RetryUntilElapsed(Option(conf.getInt("mypipe.zk.max-retry-seconds")).getOrElse(20) * 1000, 1000))
 
-  val leaderSelector = new LeaderSelector(zkClient, LEADER_PATH, leaderSelectorAdaptor)
 
   val leaderSelectorAdaptor = new LeaderSelectorListenerAdapter {
 
@@ -53,9 +52,11 @@ object PipeRunner extends App {
       log.info(s"Connecting ${pipes.size} pipes...")
       pipes.foreach(_.connect())
 
-      leaderSelector.autoRequeue()
     }
   }
+
+  val leaderSelector = new LeaderSelector(zkClient, LEADER_PATH, leaderSelectorAdaptor)
+  leaderSelector.autoRequeue()
 
   zkClient.start()
 
