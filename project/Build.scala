@@ -21,6 +21,7 @@ object Dependencies {
   val scopt = "com.github.scopt" %% "scopt" % "3.3.0"
   val typesafeConfig = "com.typesafe" % "config" % "1.2.1"
   val xinject = "javax.inject" % "javax.inject" % "1"
+  val curator = "org.apache.curator" % "curator-recipes" % "2.9.1"
 }
 
 object AvroCompiler {
