@@ -16,14 +16,16 @@ import scala.concurrent.duration._
 case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], producer: Producer) {
 
   protected val log = LoggerFactory.getLogger(getClass)
-  var state = State.STOPPED
+
   protected var CONSUMER_DISCONNECT_WAIT_SECS = 2
   protected val system = ActorSystem("mypipe")
   implicit val ec = system.dispatcher
 
   @volatile protected var _connected: Boolean = false
-  protected var flusher: Option[Cancellable] = None
+  var state = State.STOPPED
+
   protected val binlogPositionSaver = BinlogPositionSaver()
+  protected var flusher: Option[Cancellable] = None
   protected val listener = new BinaryLogConsumerListener[BinaryLogEvent, BinaryLogPosition]() {
 
     override def onStart(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
