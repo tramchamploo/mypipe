@@ -58,7 +58,7 @@ class SelectConsumer(override val config: Config)
     getTable(event.database, event.table) match {
       case Some(table) ⇒
         val rows = createRows(table, rowData)
-        Some(InsertMutation(table, rows))
+        Some(InsertMutation(table, rows, null))
       case None ⇒
         log.error(s"Could not find table for event, skipping: $event")
         None
