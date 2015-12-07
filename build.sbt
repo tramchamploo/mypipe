@@ -27,7 +27,8 @@ lazy val apiDependencies = Seq(
   scalaCompiler,
   scalaReflect,
   scalaTest,
-  typesafeConfig
+  typesafeConfig,
+  curator
 )
 
 lazy val runnerDependencies = Seq(
