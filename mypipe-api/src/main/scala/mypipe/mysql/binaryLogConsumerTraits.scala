@@ -115,7 +115,7 @@ case class Db(hostname: String, port: Int, username: String, password: String, d
 }
 
 abstract class HeartBeat(hostname: String, port: Int, username: String, password: String) {
-  val system = ActorSystem("mypipe")
+  val system = ActorSystem("mypipe-heartbeat")
   implicit val ec = system.dispatcher
 
   val log = LoggerFactory.getLogger(getClass)
