@@ -15,7 +15,7 @@ import mypipe.util.Eval
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.collection.mutable.{ HashMap, ListBuffer }
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success, Try }
@@ -41,7 +41,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
 
   val instances = HashMap.empty[BinaryLogClient, HostPortUserPass]
 
-  val downInstances = ListBuffer.empty[BinaryLogClient]
+  val downInstances = ListBuffer.empty[HostPortUserPass]
 
   var current: BinaryLogClient = null
 
@@ -75,7 +75,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
             pool.poll(5, TimeUnit.SECONDS)
             heartBeat = null
 
-            downInstances += current
+            downInstances += info
           }
 
           override def onSuccess(): Unit = {}
@@ -130,30 +130,28 @@ abstract class HeartBeat(hostname: String, port: Int, username: String, password
 
   def onSuccess(): Unit
 
-  def beat(): Unit = {
-    system.scheduler.schedule(0 millis, Conf.MYSQL_HEARTBEAT_INTERVAL_MILLIS.millis) { () ⇒
-      if (!connecting) {
-        connecting = true
+  def beat() = system.scheduler.schedule(Duration.Zero, Conf.MYSQL_HEARTBEAT_INTERVAL_MILLIS.millis) { () ⇒
+    if (!connecting) {
+      connecting = true
 
-        Try {
-          db = Db(hostname, port, username, password, "mysql")
-          db.connect(Conf.MYSQL_HEARTBEAT_TIMEOUT_MILLIS)
-        } match {
-          case Failure(e) ⇒
-            failTimes += 1
+      Try {
+        db = Db(hostname, port, username, password, "mysql")
+        db.connect(Conf.MYSQL_HEARTBEAT_TIMEOUT_MILLIS)
+      } match {
+        case Failure(e) ⇒
+          failTimes += 1
 
-            if (failTimes == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
-              log.error(s"Mysql server [$hostname:$port] is down!")
-              onFailure()
-            } else {
-              log.warn(s"Mysql server [$hostname:$port] suspended, retrying...")
-            }
+          if (failTimes == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
+            log.error(s"Mysql server [$hostname:$port] is down!")
+            onFailure()
+          } else {
+            log.warn(s"Mysql server [$hostname:$port] suspended, retrying...")
+          }
 
-          case Success(_) ⇒ onSuccess()
-        }
-
-        connecting = false
+        case Success(_) ⇒ onSuccess()
       }
+
+      connecting = false
     }
   }
 }

@@ -20,26 +20,29 @@ abstract class AbstractMySQLBinaryLogConsumer
     extends AbstractBinaryLogConsumer[MEvent, BinaryLogFilePosition]
     with ClientPool {
 
-  protected lazy val clientInfo = getClientInfo
-  protected lazy val client = getClient
-
   def setBinaryLogPosition(binlogFileAndPos: BinaryLogFilePosition): Unit = {
+    val client = getClient
+
     if (binlogFileAndPos != BinaryLogFilePosition.current) {
-      log.info(s"Resuming binlog consumption from file=${binlogFileAndPos.filename} pos=${binlogFileAndPos.pos} for ${clientInfo.host}:${clientInfo.port}")
+      log.info(s"Resuming binlog consumption from file=${binlogFileAndPos.filename} pos=${binlogFileAndPos.pos} for ${getClientInfo.host}:${getClientInfo.port}")
       client.setBinlogFilename(binlogFileAndPos.filename)
       client.setBinlogPosition(binlogFileAndPos.pos)
     } else {
-      log.info(s"Using current master binlog position for consuming from ${clientInfo.host}:${clientInfo.port}")
+      log.info(s"Using current master binlog position for consuming from ${getClientInfo.host}:${getClientInfo.port}")
     }
   }
 
   override def id: String = {
-    s"${clientInfo.host}-${clientInfo.port}"
+    s"${getClientInfo.host}-${getClientInfo.port}"
   }
 
-  override def getBinaryLogPosition: Option[BinaryLogFilePosition] = Option(client.getBinlogFilename) match {
-    case Some(filename) ⇒ Some(BinaryLogFilePosition(filename, client.getBinlogPosition))
-    case _              ⇒ None
+  override def getBinaryLogPosition: Option[BinaryLogFilePosition] = {
+    val client = getClient
+
+    Option(client.getBinlogFilename) match {
+      case Some(filename) ⇒ Some(BinaryLogFilePosition(filename, client.getBinlogPosition))
+      case _              ⇒ None
+    }
   }
 
   override protected def decodeEvent(event: MEvent): Option[Event] = {
@@ -121,6 +124,7 @@ abstract class AbstractMySQLBinaryLogConsumer
 
   override protected def onStart(): Future[Boolean] = {
     Future {
+      val client = getClient
       @volatile var connected = false
 
       client.setServerId(MySQLServerId.next)
@@ -135,7 +139,7 @@ abstract class AbstractMySQLBinaryLogConsumer
         override def onCommunicationFailure(client: BinaryLogClient, ex: Exception) {}
       })
 
-      log.info(s"Connecting client to $client.get:${clientInfo.host}:${clientInfo.port}")
+      log.info(s"Connecting client to $client.get:${getClientInfo.host}:${getClientInfo.port}")
 
       Future { client.connect() }
 
@@ -146,7 +150,7 @@ abstract class AbstractMySQLBinaryLogConsumer
     }
   }
 
-  override protected def onStop(): Unit = client.disconnect()
+  override protected def onStop(): Unit = getClient.disconnect()
 
   protected def isMutation(eventType: EventType): Boolean = {
     EventType.isDelete(eventType) ||
