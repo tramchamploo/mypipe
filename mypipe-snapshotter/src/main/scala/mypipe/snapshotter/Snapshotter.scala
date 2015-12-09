@@ -6,6 +6,7 @@ import mypipe.api.producer.Producer
 import mypipe.runner.PipeRunnerUtil
 import scopt.OptionParser
 import mypipe.pipe.Pipe
+import mypipe.mysql.Db
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -82,27 +83,5 @@ object Snapshotter extends App {
     pipe.consumer.asInstanceOf[SelectConsumer].handleEvents(Await.result(events, 10.seconds))
 
     log.info("All events handled, safe to shut down.")
-  }
-}
-
-case class Db(hostname: String, port: Int, username: String, password: String, dbName: String) {
-
-  private val configuration = new Configuration(username, hostname, port, Some(password))
-  var connection: Connection = _
-
-  def connect(): Unit = connect(timeoutMillis = 5000)
-  def connect(timeoutMillis: Int) {
-    connection = new MySQLConnection(configuration)
-    val future = connection.connect
-    Await.result(future, timeoutMillis.millis)
-  }
-
-  def select(db: String): Unit = {
-  }
-
-  def disconnect(): Unit = disconnect(timeoutMillis = 5000)
-  def disconnect(timeoutMillis: Int) {
-    val future = connection.disconnect
-    Await.result(future, timeoutMillis.millis)
   }
 }

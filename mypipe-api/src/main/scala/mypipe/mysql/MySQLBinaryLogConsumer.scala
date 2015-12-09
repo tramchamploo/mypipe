@@ -5,7 +5,7 @@ import com.typesafe.config.Config
 
 case class MySQLBinaryLogConsumer(override val config: Config)
   extends AbstractMySQLBinaryLogConsumer
-  with ConfigBasedConnectionSource
+  with HeartBeatClientPool
   with ConfigBasedErrorHandlingBehaviour[MEvent, BinaryLogFilePosition]
   with ConfigBasedEventSkippingBehaviour
   with CacheableTableMapBehaviour

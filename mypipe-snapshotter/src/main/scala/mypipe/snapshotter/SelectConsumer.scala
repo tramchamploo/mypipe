@@ -28,10 +28,12 @@ class SelectConsumer(override val config: Config)
     with ConfigBasedEventSkippingBehaviour
     with CacheableTableMapBehaviour
     with ConfigLoader
-    with ConfigBasedConnectionSource {
+    with HeartBeatClientPool {
 
+  private val clientInfo = getClientInfo
   private val system = ActorSystem("mypipe-snapshotter")
-  private val dbMetadata = system.actorOf(MySQLMetadataManager.props(hostname, port, username, Some(password)), s"SelectConsumer-DBMetadataActor-$hostname:$port")
+  private val dbMetadata = system.actorOf(MySQLMetadataManager.props(clientInfo.host, clientInfo.port, clientInfo.user, Some(clientInfo.password)),
+    s"SelectConsumer-DBMetadataActor-${clientInfo.host}:${clientInfo.port}")
   private implicit val ec = system.dispatcher
   private implicit val timeout = Timeout(2.second)
   private val tables = scala.collection.mutable.HashMap[String, Table]()
@@ -86,7 +88,7 @@ class SelectConsumer(override val config: Config)
   /** Gets this consumer's unique ID.
    *  @return Unique ID as a string.
    */
-  override def id: String = s"select-consumer-$hostname-$port"
+  override def id: String = s"select-consumer-${clientInfo.host}-${clientInfo.port}"
 
   override protected def onStop(): Unit = Unit
   override protected def onStart(): Future[Boolean] = Future.successful(true)

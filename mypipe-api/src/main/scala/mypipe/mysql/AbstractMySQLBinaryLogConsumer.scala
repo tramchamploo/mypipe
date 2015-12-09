@@ -18,22 +18,23 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class AbstractMySQLBinaryLogConsumer
     extends AbstractBinaryLogConsumer[MEvent, BinaryLogFilePosition]
-    with ConnectionSource {
+    with ClientPool {
 
-  protected lazy val client = new BinaryLogClient(hostname, port, username, password)
+  protected lazy val clientInfo = getClientInfo
+  protected lazy val client = getClient
 
   def setBinaryLogPosition(binlogFileAndPos: BinaryLogFilePosition): Unit = {
     if (binlogFileAndPos != BinaryLogFilePosition.current) {
-      log.info(s"Resuming binlog consumption from file=${binlogFileAndPos.filename} pos=${binlogFileAndPos.pos} for $hostname:$port")
+      log.info(s"Resuming binlog consumption from file=${binlogFileAndPos.filename} pos=${binlogFileAndPos.pos} for ${clientInfo.host}:${clientInfo.port}")
       client.setBinlogFilename(binlogFileAndPos.filename)
       client.setBinlogPosition(binlogFileAndPos.pos)
     } else {
-      log.info(s"Using current master binlog position for consuming from $hostname:$port")
+      log.info(s"Using current master binlog position for consuming from ${clientInfo.host}:${clientInfo.port}")
     }
   }
 
   override def id: String = {
-    s"$hostname-$port"
+    s"${clientInfo.host}-${clientInfo.port}"
   }
 
   override def getBinaryLogPosition: Option[BinaryLogFilePosition] = Option(client.getBinlogFilename) match {
@@ -116,7 +117,7 @@ abstract class AbstractMySQLBinaryLogConsumer
     Some(createMutation(event))
   }
 
-  override def toString: String = s"$hostname:$port"
+  override def toString: String = id
 
   override protected def onStart(): Future[Boolean] = {
     Future {
@@ -134,7 +135,7 @@ abstract class AbstractMySQLBinaryLogConsumer
         override def onCommunicationFailure(client: BinaryLogClient, ex: Exception) {}
       })
 
-      log.info(s"Connecting client to $client.get:$hostname:$port")
+      log.info(s"Connecting client to $client.get:${clientInfo.host}:${clientInfo.port}")
 
       Future { client.connect() }
 
