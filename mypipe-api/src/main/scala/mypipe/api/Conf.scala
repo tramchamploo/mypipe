@@ -46,11 +46,11 @@ object Conf {
 
   val INCLUDE_EVENT_CONDITION = conf.getOptionalNoneEmptyString("mypipe.include-event-condition")
 
-  val MYSQL_SERVER_ID_PREFIX = conf.getInt("mypipe.mysql-server-id-prefix")
-
-  val MYSQL_HEARTBEAT_TIMEOUT_MILLIS = conf.getInt("mypipe.mysql-heartbeat-timeout-millis")
-  val MYSQL_HEARTBEAT_INTERVAL_MILLIS = conf.getInt("mypipe.mysql-heartbeat-interval-millis")
-  val MYSQL_HEARTBEAT_MAX_RETRY = conf.getInt("mypipe.mysql-heartbeat-max-retry")
+  val MYSQL_CONF = conf.getConfig("mypipe.mysql")
+  val MYSQL_SERVER_ID_PREFIX = MYSQL_CONF.getInt("server-id-prefix")
+  val MYSQL_HEARTBEAT_TIMEOUT_MILLIS = MYSQL_CONF.getInt("heartbeat-timeout-millis")
+  val MYSQL_HEARTBEAT_INTERVAL_MILLIS = MYSQL_CONF.getInt("heartbeat-interval-millis")
+  val MYSQL_HEARTBEAT_MAX_RETRY = MYSQL_CONF.getInt("heartbeat-max-retry")
 
   def loadClassesForKey[T](key: String): Map[String, Option[Class[T]]] = {
     val classes = Conf.conf.getObject(key).asScala
