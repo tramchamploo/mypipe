@@ -31,6 +31,7 @@ trait ConfigBasedConnections extends Connections {
 
 trait ClientPool extends Connections {
   def getClient: BinaryLogClient
+
   def getClientInfo: HostPortUserPass
 }
 
@@ -61,7 +62,6 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
 
   override def getClient: BinaryLogClient = Option(pool.peek()) match {
     case Some(client) ⇒
-      if (!client.isConnected) client.connect()
       if (current != client) current = client
 
       if (heartBeat == null) {
@@ -73,6 +73,9 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
             log.error("Switching to another mysql instance...")
 
             pool.poll(5, TimeUnit.SECONDS)
+            val next = pool.peek()
+            if (next != null && !next.isConnected) next.connect()
+
             heartBeat = null
 
             downInstances += info
@@ -98,6 +101,7 @@ case class Db(hostname: String, port: Int, username: String, password: String, d
   var connection: Connection = _
 
   def connect(): Unit = connect(timeoutMillis = 5000)
+
   def connect(timeoutMillis: Int) {
     connection = new MySQLConnection(configuration)
     val future = connection.connect
@@ -108,6 +112,7 @@ case class Db(hostname: String, port: Int, username: String, password: String, d
   }
 
   def disconnect(): Unit = disconnect(timeoutMillis = 5000)
+
   def disconnect(timeoutMillis: Int) {
     val future = connection.disconnect
     Await.result(future, timeoutMillis.millis)

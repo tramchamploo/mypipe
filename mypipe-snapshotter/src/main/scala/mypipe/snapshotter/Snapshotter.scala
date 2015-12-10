@@ -1,20 +1,18 @@
 package mypipe.snapshotter
 
-import com.github.mauricio.async.db.mysql.MySQLConnection
+import com.github.mauricio.async.db.Connection
+import com.typesafe.config.{ Config, ConfigFactory }
 import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
-import mypipe.runner.PipeRunnerUtil
-import scopt.OptionParser
-import mypipe.pipe.Pipe
 import mypipe.mysql.Db
-
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import com.github.mauricio.async.db.{ Configuration, Connection }
-import com.typesafe.config.{ Config, ConfigFactory }
+import mypipe.pipe.Pipe
+import mypipe.runner.PipeRunnerUtil
 import org.slf4j.LoggerFactory
+import scopt.OptionParser
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 object Snapshotter extends App {
 

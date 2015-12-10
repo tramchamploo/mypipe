@@ -122,15 +122,19 @@ abstract class AbstractBinaryLogConsumer[BinaryLogEvent, BinaryLogPosition] exte
     true
   }
 
-  private def handleRollback(event: RollbackEvent): Boolean = {
-    clearTxState()
-    updateBinaryLogPosition()
-  }
+  private def handleRollback(event: RollbackEvent): Boolean =
+    if (!transactionInProgress) true
+    else {
+      clearTxState()
+      updateBinaryLogPosition()
+    }
 
-  private def handleCommit(event: CommitEvent): Boolean = {
-    log.debug("Handling commit event {}", event)
-    commit() && updateBinaryLogPosition()
-  }
+  private def handleCommit(event: CommitEvent): Boolean =
+    if (!transactionInProgress) true
+    else {
+      log.debug("Handling commit event {}", event)
+      commit() && updateBinaryLogPosition()
+    }
 
   private def handleXid(event: XidEvent): Boolean = {
     commit() && updateBinaryLogPosition()
