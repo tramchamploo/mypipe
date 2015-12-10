@@ -136,9 +136,11 @@ abstract class AbstractBinaryLogConsumer[BinaryLogEvent, BinaryLogPosition] exte
       commit() && updateBinaryLogPosition()
     }
 
-  private def handleXid(event: XidEvent): Boolean = {
-    commit() && updateBinaryLogPosition()
-  }
+  private def handleXid(event: XidEvent): Boolean =
+    if (!transactionInProgress) true
+    else {
+      commit() && updateBinaryLogPosition()
+    }
 
   private def clearTxState() {
     txQueue.clear()

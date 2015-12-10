@@ -46,7 +46,7 @@ class TableCacheSpec extends UnitSpec with DatabaseSpec with ActorSystemSpec wit
         queueTableMap.add(table)
       }
       override def onTableAlter(c: BinaryLogConsumer[MEvent, BinaryLogFilePosition], event: AlterEvent): Boolean = {
-        val table = tableCache.refreshTable(event.database, event.table.name)
+        val table = Await.result(tableCache.refreshTable(event.database, event.table.name), Duration.Inf)
         queueTableAlter.add(table.get)
         true
       }

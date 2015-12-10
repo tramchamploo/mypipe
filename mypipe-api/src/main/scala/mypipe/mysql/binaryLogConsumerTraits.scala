@@ -278,14 +278,13 @@ trait CacheableTableMapBehaviour extends BinaryLogConsumerTableFinder with Heart
   protected var tableCache = new TableCache(clientInfo.host, clientInfo.port, clientInfo.user, clientInfo.password)
 
   override protected def findTable(tableMapEvent: TableMapEvent): Option[Table] = {
-    val table = tableCache.addTableByEvent(tableMapEvent)
-    Some(table)
+    Await.result(tableCache.addTableByEvent(tableMapEvent), Duration.Inf)
   }
 
   override protected def findTable(tableId: java.lang.Long): Option[Table] =
     tableCache.getTable(tableId)
 
   override protected def findTable(database: String, table: String): Option[Table] = {
-    tableCache.refreshTable(database, table)
+    Await.result(tableCache.refreshTable(database, table), Duration.Inf)
   }
 }
