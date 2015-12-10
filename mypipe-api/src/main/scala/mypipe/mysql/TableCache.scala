@@ -14,7 +14,7 @@ import scala.concurrent.duration._
  *  the database in order to determine column and key structure.
  *
  *  @param hostname of the database
- *  @param port of the database
+ *  @param port     of the database
  *  @param username used to authenticate against the database
  *  @param password used to authenticate against the database
  */
@@ -61,8 +61,8 @@ class TableCache(hostname: String, port: Int, username: String, password: String
 
       lookupTable(tableId, database, tableName) map {
         case Some(t) ⇒
-          tablesById.put(tableId, t)
-          tableNameToId.put(t.db + t.name, t.id)
+          tablesById += tableId -> t
+          tableNameToId += (t.db + t.name) -> t.id
           Some(t)
         case None ⇒ None
       }
@@ -72,7 +72,13 @@ class TableCache(hostname: String, port: Int, username: String, password: String
         case Some(t) ⇒ Future(Some(t))
         case None ⇒
           val t = lookupTable(tableId, database, tableName)
-          t.foreach { case Some(tt) ⇒ tableNameToId.put(tt.db + tt.name, tt.id); case _ ⇒ }
+
+          t.foreach {
+            case Some(tt) ⇒
+              tableNameToId += (tt.db + tt.name) -> tt.id; tablesById += tableId -> tt
+            case _        ⇒
+          }
+
           t
       }
     }
