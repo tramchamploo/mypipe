@@ -55,7 +55,7 @@ object PipeRunner extends App {
       }
 
     override def stateChanged(client: CuratorFramework, newState: ConnectionState): Unit =
-      if ((newState eq ConnectionState.SUSPENDED) || (newState eq ConnectionState.LOST)) {
+      if ((newState == ConnectionState.SUSPENDED) || (newState == ConnectionState.LOST)) {
         log.info("Zookeeper connection lost, shutting down...")
         pipes.foreach(_.disconnect())
         throw new CancelLeadershipException
@@ -118,7 +118,7 @@ object PipeRunnerUtil {
       // config allows for multiple consumers, we only take the first one
       val consumerInstance = {
         val c = consumersConf.head
-        createConsumer(pipeName = name, consumerConfigs.head)
+        createConsumer(pipeName = name, consumerConfigs.head, c)
       }
 
       // the following hack assumes a single producer per pipe
@@ -139,10 +139,10 @@ object PipeRunnerUtil {
     }
   }
 
-  protected def createConsumer(pipeName: String, params: (String, Config, Option[Class[BinaryLogConsumer[_, _]]])): BinaryLogConsumer[_, _] = {
+  protected def createConsumer(pipeName: String, params: (String, Config, Option[Class[BinaryLogConsumer[_, _]]]), confName: String): BinaryLogConsumer[_, _] = {
     try {
       val consumer = params._3 match {
-        case None ⇒ MySQLBinaryLogConsumer(params._2).asInstanceOf[BinaryLogConsumer[_, _]]
+        case None ⇒ MySQLBinaryLogConsumer(params._2, confName).asInstanceOf[BinaryLogConsumer[_, _]]
         case Some(clazz) ⇒
           val consumer = {
             clazz.getConstructors.find(

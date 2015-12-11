@@ -51,6 +51,8 @@ object Conf {
   val MYSQL_HEARTBEAT_TIMEOUT_MILLIS = MYSQL_CONF.getInt("heartbeat-timeout-millis")
   val MYSQL_HEARTBEAT_INTERVAL_MILLIS = MYSQL_CONF.getInt("heartbeat-interval-millis")
   val MYSQL_HEARTBEAT_MAX_RETRY = MYSQL_CONF.getInt("heartbeat-max-retry")
+  val MYSQL_DO_RECOVER_AFTER_DOWN = MYSQL_CONF.getBoolean("do-recover-after-down")
+  val MYSQL_SECONDS_BEFORE_RECOVER_AFTER_DOWN = MYSQL_CONF.getInt("seconds-before-recover-after-down")
 
   def loadClassesForKey[T](key: String): Map[String, Option[Class[T]]] = {
     val classes = Conf.conf.getObject(key).asScala

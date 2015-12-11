@@ -9,6 +9,7 @@ import mypipe.api.event._
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient
 import com.github.shyiko.mysql.binlog.event.EventType._
+import mypipe.util.Listener
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
@@ -30,10 +31,6 @@ abstract class AbstractMySQLBinaryLogConsumer
     } else {
       log.info(s"Using current master binlog position for consuming from ${getClientInfo.host}:${getClientInfo.port}")
     }
-  }
-
-  override def id: String = {
-    s"${getClientInfo.host}-${getClientInfo.port}"
   }
 
   override def getBinaryLogPosition: Option[BinaryLogFilePosition] = {

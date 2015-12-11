@@ -76,7 +76,7 @@ class TableCache(hostname: String, port: Int, username: String, password: String
           t.foreach {
             case Some(tt) ⇒
               tableNameToId += (tt.db + tt.name) -> tt.id; tablesById += tableId -> tt
-            case _        ⇒
+            case _ ⇒
           }
 
           t
