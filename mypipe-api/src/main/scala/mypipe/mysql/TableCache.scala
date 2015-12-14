@@ -18,7 +18,7 @@ import scala.concurrent.duration._
  *  @param username used to authenticate against the database
  *  @param password used to authenticate against the database
  */
-class TableCache(hostname: String, port: Int, username: String, password: String) {
+class TableCache(val hostname: String, val port: Int, val username: String, val password: String) {
   protected val system = ActorSystem("mypipe")
   protected implicit val ec = system.dispatcher
   protected val tablesById = scala.collection.mutable.HashMap[Long, Table]()
@@ -96,10 +96,10 @@ class TableCache(hostname: String, port: Int, username: String, password: String
   }
 
   override def equals(other: Any): Boolean = other match {
-    case that: TableCache =>
+    case that: TableCache ⇒
       val t = that.asInstanceOf[TableCache]
       hostname == t.hostname && port == t.port && username == t.username && password == t.username
-    case _ => false
+    case _ ⇒ false
   }
 
 }
