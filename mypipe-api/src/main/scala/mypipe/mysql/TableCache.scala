@@ -28,7 +28,6 @@ class TableCache(val hostname: String, val port: Int, val username: String, val 
   protected val log = LoggerFactory.getLogger(getClass)
 
   def getTable(tableId: Long): Option[Table] = {
-    println(tablesById.keySet)
     tablesById.get(tableId)
   }
 
