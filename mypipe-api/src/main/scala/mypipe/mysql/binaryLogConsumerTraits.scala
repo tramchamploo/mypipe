@@ -54,7 +54,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
   configs.foreach { i ⇒
     Try(new BinaryLogClient(i.host, i.port, i.user, i.password)) match {
       case Success(c) ⇒
-        log.info(s"Adding mysql client to pool: ${i.host}-${i.port}")
+        log.info(s"Adding mysql client to pool: ${i.host}:${i.port}")
 
         pool.offer(c)
         instances += c -> i
@@ -366,9 +366,14 @@ class ConfigBasedErrorHandler[BinaryLogEvent, BinaryLogPosition] extends BinaryL
 
 trait CacheableTableMapBehaviour extends BinaryLogConsumerTableFinder with HeartBeatClientPool {
 
-  private val clientInfo = getClientInfo
+  private var _tableInfo: HostPortUserPass = null
+  private var _tableCache: TableCache = null
 
-  protected var tableCache = new TableCache(clientInfo.host, clientInfo.port, clientInfo.user, clientInfo.password)
+  protected def tableCache = if (_tableInfo != getClientInfo) {
+    _tableInfo = getClientInfo
+    _tableCache = new TableCache(_tableInfo.host, _tableInfo.port, _tableInfo.user, _tableInfo.password)
+    _tableCache
+  } else _tableCache
 
   override protected def findTable(tableMapEvent: TableMapEvent): Option[Table] = {
     Await.result(tableCache.addTableByEvent(tableMapEvent), Duration.Inf)

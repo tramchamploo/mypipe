@@ -94,4 +94,12 @@ class TableCache(hostname: String, port: Int, username: String, password: String
       case _            ⇒ None
     }
   }
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TableCache =>
+      val t = that.asInstanceOf[TableCache]
+      hostname == t.hostname && port == t.port && username == t.username && password == t.username
+    case _ => false
+  }
+
 }
