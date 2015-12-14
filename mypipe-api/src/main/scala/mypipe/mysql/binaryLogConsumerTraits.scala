@@ -45,12 +45,6 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
 
   protected var current: BinaryLogClient = null
 
-  protected var heartBeat: HeartBeat = null
-
-  protected var heartbeatThread: Cancellable = null
-
-  protected var recoveryThread: Cancellable = null
-
   configs.foreach { i ⇒
     Try(new BinaryLogClient(i.host, i.port, i.user, i.password)) match {
       case Success(c) ⇒
@@ -63,39 +57,22 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
     }
   }
 
-  protected def doRecover(info: HostPortUserPass): Unit = {
-    val heartBeat = new HeartBeat(info.host, info.port, info.user, info.password, Conf.MYSQL_SECONDS_BEFORE_RECOVER_AFTER_DOWN.seconds) {
-      @volatile var nSuccess = 0
-
-      override def onFailure(): Unit = {}
-
-      override def onSuccess(): Unit = {
-        nSuccess += 1
-        if (nSuccess == 3) {
-          log.info(s"Recover success! Putting mysql client back to pool: ${info.host}-${info.port}")
-          pool.offer(new BinaryLogClient(info.host, info.port, info.user, info.password))
-        }
-      }
-    }
-
-    heartBeat.addListener(new Listener {
-
-      @volatile var nFailure = 0
-
-      override def onEvent(evt: util.Event) = evt match {
-        case BeatSuccess ⇒ recoveryThread.cancel()
-        case _ ⇒
-          nFailure += 1
-          if (nFailure == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
-            log.info(s"Recover failed: ${info.host}-${info.port}")
-            recoveryThread.cancel()
-          }
-      }
-    })
-    recoveryThread = heartBeat.beat()
+  override def getClient: BinaryLogClient = Option(pool.peek()) match {
+    case Some(client) ⇒
+      if (current != client) current = client
+      client
+    case None ⇒ throw new RuntimeException("No available client at the time!")
   }
 
-  protected def newHeartBeat(info: HostPortUserPass): HeartBeat
+  def getClientInfo: HostPortUserPass = instances(getClient)
+
+}
+
+trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBinaryLogConsumer ⇒
+
+  protected var heartBeat: HeartBeat = null
+  protected var heartbeatThread: Cancellable = null
+  protected var recoveryThread: Cancellable = null
 
   override def getClient: BinaryLogClient = Option(pool.peek()) match {
     case Some(client) ⇒
@@ -110,12 +87,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
     case None ⇒ throw new RuntimeException("No available client at the time!")
   }
 
-  def getClientInfo: HostPortUserPass = instances(getClient)
-
-}
-
-trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBinaryLogConsumer ⇒
-  override def newHeartBeat(info: HostPortUserPass) = {
+  def newHeartBeat(info: HostPortUserPass) = {
     val hb = new HeartBeat(info.host, info.port, info.user, info.password) {
 
       override def onFailure() = {
@@ -149,6 +121,38 @@ trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBi
 
     hb
   }
+
+  protected def doRecover(info: HostPortUserPass): Unit = {
+    val heartBeat = new HeartBeat(info.host, info.port, info.user, info.password, Conf.MYSQL_SECONDS_BEFORE_RECOVER_AFTER_DOWN.seconds) {
+      @volatile var nSuccess = 0
+
+      override def onFailure(): Unit = {}
+
+      override def onSuccess(): Unit = {
+        nSuccess += 1
+        if (nSuccess == 3) {
+          log.info(s"Recover success! Putting mysql client back to pool: ${info.host}-${info.port}")
+          pool.offer(new BinaryLogClient(info.host, info.port, info.user, info.password))
+        }
+      }
+    }
+
+    heartBeat.addListener(new Listener {
+
+      @volatile var nFailure = 0
+
+      override def onEvent(evt: util.Event) = evt match {
+        case BeatSuccess ⇒ recoveryThread.cancel()
+        case _ ⇒
+          nFailure += 1
+          if (nFailure == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
+            log.info(s"Recover failed: ${info.host}-${info.port}")
+            recoveryThread.cancel()
+          }
+      }
+    })
+    recoveryThread = heartBeat.beat()
+  }
 }
 
 case class Db(hostname: String, port: Int, username: String, password: String, dbName: String) {
@@ -172,66 +176,6 @@ case class Db(hostname: String, port: Int, username: String, password: String, d
   def disconnect(timeoutMillis: Int) {
     val future = connection.disconnect
     Await.result(future, timeoutMillis.millis)
-  }
-}
-
-object BeatSuccess extends mypipe.util.Event
-
-object BeatFailure extends mypipe.util.Event
-
-abstract class HeartBeat(hostname: String,
-                         port: Int,
-                         username: String,
-                         password: String,
-                         initialDelay: FiniteDuration = Duration.Zero) extends Listenable {
-
-  val system = ActorSystem("mypipe-heartbeat")
-  implicit val ec = system.dispatcher
-
-  val log = LoggerFactory.getLogger(getClass)
-
-  val db: Db = Db(hostname, port, username, password, "mysql")
-
-  var failTimes = 0
-
-  @volatile var connecting = false
-
-  def onFailure(): Unit
-
-  def onSuccess(): Unit
-
-  def beat() = system.scheduler.schedule(initialDelay, Conf.MYSQL_HEARTBEAT_INTERVAL_MILLIS.millis) {
-    if (!connecting) {
-      connecting = true
-
-      Try {
-        db.connect(Conf.MYSQL_HEARTBEAT_TIMEOUT_MILLIS)
-      } match {
-        case Failure(e) ⇒
-          failTimes += 1
-
-          if (failTimes == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
-            log.error(s"Mysql server [$hostname:$port] is down!")
-            notifyAll(BeatFailure)
-            onFailure()
-            failTimes = 0
-          } else {
-            log.warn(s"Mysql server [$hostname:$port] suspended, retrying...")
-          }
-
-        case Success(_) ⇒
-          notifyAll(BeatSuccess)
-          onSuccess()
-          db.disconnect()
-
-          if (failTimes > 0) {
-            log.warn(s"Mysql server [$hostname:$port] recover from suspended.")
-            failTimes = 0
-          }
-      }
-
-      connecting = false
-    }
   }
 }
 

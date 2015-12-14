@@ -1,21 +1,20 @@
 package mypipe.mysql
 
-import com.github.shyiko.mysql.binlog.BinaryLogClient.{ LifecycleListener, EventListener }
-import com.github.shyiko.mysql.binlog.event.{ Event ⇒ MEvent, _ }
-import mypipe.api.consumer.AbstractBinaryLogConsumer
-import mypipe.api.data.{ UnknownTable, Column, Table, Row }
-import mypipe.api.event.Event
-import mypipe.api.event._
+import java.util.concurrent.TimeUnit
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient
+import com.github.shyiko.mysql.binlog.BinaryLogClient.{ EventListener, LifecycleListener }
 import com.github.shyiko.mysql.binlog.event.EventType._
-import mypipe.util.Listener
+import com.github.shyiko.mysql.binlog.event.{ Event ⇒ MEvent, _ }
+import mypipe.api.consumer.AbstractBinaryLogConsumer
+import mypipe.api.data.{ Column, Row, Table, UnknownTable }
+import mypipe.api.event.{ Event, _ }
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
 import scala.compat.Platform
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.util.{ Failure, Try }
 
 abstract class AbstractMySQLBinaryLogConsumer
@@ -126,6 +125,8 @@ abstract class AbstractMySQLBinaryLogConsumer
       @volatile var connected = false
 
       client.setServerId(MySQLServerId.next)
+      client.setKeepAliveConnectTimeout(TimeUnit.SECONDS.toMillis(30))
+
       client.registerEventListener(new EventListener() {
         override def onEvent(event: MEvent) = handleEvent(event)
       })
