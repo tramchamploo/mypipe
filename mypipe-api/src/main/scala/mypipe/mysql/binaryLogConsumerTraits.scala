@@ -79,9 +79,17 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
     }
 
     heartBeat.addListener(new Listener {
+
+      @volatile var nFailure = 0
+
       override def onEvent(evt: util.Event) = evt match {
         case BeatSuccess ⇒ recoveryThread.cancel()
-        case _           ⇒
+        case _ ⇒
+          nFailure += 1
+          if (nFailure == Conf.MYSQL_HEARTBEAT_MAX_RETRY) {
+            log.info(s"Recover failed: ${info.host}-${info.port}")
+            recoveryThread.cancel()
+          }
       }
     })
     recoveryThread = heartBeat.beat()
@@ -144,8 +152,10 @@ trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBi
 
         val next = pool.peek()
         val nextInfo = instances(next)
-        log.error(s"Switching to another mysql instance..., ${nextInfo.host}:${nextInfo.port}")
+
         if (next != null && !next.isConnected) {
+          log.error(s"Switching to another mysql instance..., [${nextInfo.host}:${nextInfo.port}], " +
+            s"binlog file: ${prev.getBinlogFilename}, pos: ${prev.getBinlogPosition}")
           next.setBinlogFilename(prev.getBinlogFilename)
           next.setBinlogPosition(prev.getBinlogPosition)
           onStart()

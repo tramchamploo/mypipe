@@ -16,6 +16,7 @@ import scala.collection.immutable.ListMap
 import scala.compat.Platform
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{ Failure, Try }
 
 abstract class AbstractMySQLBinaryLogConsumer
     extends AbstractBinaryLogConsumer[MEvent, BinaryLogFilePosition]
@@ -138,7 +139,12 @@ abstract class AbstractMySQLBinaryLogConsumer
 
       log.info(s"Connecting client to $client.get:${getClientInfo.host}:${getClientInfo.port}")
 
-      Future { client.connect() }
+      Future {
+        Try(client.connect()) match {
+          case Failure(e) ⇒ log.error("Client connection fail!, ", e)
+          case _          ⇒
+        }
+      }
 
       val startTime = Platform.currentTime
       while (Platform.currentTime - startTime < 10000 && !connected) Thread.sleep(10)
