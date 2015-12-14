@@ -10,10 +10,6 @@ import scala.util.{ Failure, Success, Try }
 
 /** Created by guohang.bao on 15/12/14.
  */
-object BeatSuccess extends mypipe.util.Event
-
-object BeatFailure extends mypipe.util.Event
-
 abstract class HeartBeat(hostname: String,
                          port: Int,
                          username: String,
@@ -69,3 +65,7 @@ abstract class HeartBeat(hostname: String,
     }
   }
 }
+
+object BeatSuccess extends mypipe.util.Event
+
+object BeatFailure extends mypipe.util.Event

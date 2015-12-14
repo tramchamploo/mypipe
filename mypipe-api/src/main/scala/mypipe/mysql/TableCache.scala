@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{ Failure, Success }
 
 /** A cache for tables whose metadata needs to be looked up against
  *  the database in order to determine column and key structure.
@@ -27,6 +28,7 @@ class TableCache(val hostname: String, val port: Int, val username: String, val 
   protected val log = LoggerFactory.getLogger(getClass)
 
   def getTable(tableId: Long): Option[Table] = {
+    println(tablesById.keySet)
     tablesById.get(tableId)
   }
 
@@ -69,17 +71,14 @@ class TableCache(val hostname: String, val port: Int, val username: String, val 
 
     } else {
       Future(tablesById.get(tableId)) flatMap {
-        case Some(t) ⇒ Future(Some(t))
+        case Some(t) ⇒ Future.successful(Some(t))
         case None ⇒
-          val t = lookupTable(tableId, database, tableName)
-
-          t.foreach {
-            case Some(tt) ⇒
+          lookupTable(tableId, database, tableName) andThen {
+            case Success(t) ⇒
+              val tt = t.get
               tableNameToId += (tt.db + tt.name) -> tt.id; tablesById += tableId -> tt
-            case _ ⇒
+            case Failure(_) ⇒
           }
-
-          t
       }
     }
   }
