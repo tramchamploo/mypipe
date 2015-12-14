@@ -95,36 +95,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
     recoveryThread = heartBeat.beat()
   }
 
-  protected def newHeartBeat(info: HostPortUserPass) = {
-    val hb = new HeartBeat(info.host, info.port, info.user, info.password) {
-
-      override def onFailure() = {
-        val prev = pool.poll(5, TimeUnit.SECONDS)
-
-        log.error("Switching to another mysql instance...")
-        val next = pool.peek()
-        if (next != null && !next.isConnected) {
-          next.setBinlogFilename(prev.getBinlogFilename)
-          next.setBinlogPosition(prev.getBinlogPosition)
-        }
-
-        heartBeat = null
-
-        if (Conf.MYSQL_DO_RECOVER_AFTER_DOWN) doRecover(info)
-      }
-
-      override def onSuccess(): Unit = if (log.isDebugEnabled) log.debug(s"Heartbeat detection success: ${info.host}-${info.port}")
-    }
-
-    hb.addListener(new Listener {
-      override def onEvent(evt: util.Event) = evt match {
-        case BeatFailure ⇒ heartbeatThread.cancel()
-        case _           ⇒
-      }
-    })
-
-    hb
-  }
+  protected def newHeartBeat(info: HostPortUserPass): HeartBeat
 
   override def getClient: BinaryLogClient = Option(pool.peek()) match {
     case Some(client) ⇒
