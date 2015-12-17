@@ -69,11 +69,12 @@ object SingleValuedMutation {
 case class InsertMutation(
   override val table: Table,
   override val rows: List[Row],
+  override val timestamp: java.lang.Long,
   override val txid: UUID = null)
-    extends SingleValuedMutation(table, rows, txid) {
+    extends SingleValuedMutation(table, rows, timestamp, txid) {
 
   override def txAware(txid: UUID = null): Mutation = {
-    InsertMutation(table, rows, txid)
+    InsertMutation(table, rows, timestamp, txid)
   }
 }
 
