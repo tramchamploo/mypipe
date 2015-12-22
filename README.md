@@ -3,6 +3,18 @@ mypipe latches onto a MySQL server with binary log replication enabled and
 allows for the creation of pipes that can consume the replication stream and
 act on the data (primarily integrated with Apache Kafka).
 
+# Features
+* streams binary logs remotely, emulating a slave
+* writes binlog events into Kafka using a generic or specific Avro schema
+* supports saving / loading binary log positions in a modular fashion (files, MySQL, or custom Java/Scala code to do so) 
+* handles `ALTER TABLE` events and can refresh Avro schema being used
+* built in a modular way allowing binlog events to be published into any system, not just Kafka
+* can preload an entire MySQL table into Kafka, then resume from binary logs (useful with Kafka compaction, infinite retention, can be used to bootstrap downstream systems with the entire data for a table)
+* configurable Kafka topic names based on the database and table
+* whitelist / blacklist support for what to process or what not to process in a binary log (based on database and table)
+* configurable error handling with the ability to specify custom handlers written in Java or Scala
+* Kafka generic console consumer that interfaces with an in memory Avro schema repo for quick and easy data exploration in Kafka
+
 # API
 mypipe tries to provide enough information that usually is not part of the
 MySQL binary log stream so that the data is meaningful. mypipe requires a
@@ -420,55 +432,79 @@ The database must also have binary logging enabled in `row` format.
 # Sample application.conf
 
     mypipe {
-
+    
       # Avro schema repository client class name
       schema-repo-client = "mypipe.avro.schema.SchemaRepo"
-
+    
       # consumers represent sources for mysql binary logs
       consumers {
-
-      database1  {
+    
+        localhost {
           # database "host:port:user:pass" array
           source = "localhost:3306:mypipe:mypipe"
         }
       }
-
+    
       # data producers export data out (stdout, other stores, external services, etc.)
       producers {
-
+    
         stdout {
-           class = "mypipe.producer.stdout.StdoutProducer"
+          class = "mypipe.producer.stdout.StdoutProducer"
         }
-
-    	  kafka-generic {
-    	    class = "mypipe.producer.KafkaMutationGenericAvroProducer"
-    	  }
+    
+        kafka-generic {
+          class = "mypipe.producer.KafkaMutationGenericAvroProducer"
+        }
       }
-
+    
       # pipes join consumers and producers
       pipes {
-
-        # prints queries to standard out
+    
         stdout {
-          consumers = ["database1"]
+          consumers = ["localhost"]
           producer {
             stdout {}
           }
+          # how to save and load binary log positions
+          binlog-position-repo {
+            # saved to a file, this is the default if unspecified
+            class = "mypipe.api.repo.ConfigurableFileBasedBinaryLogPositionRepository"
+            config {
+              file-prefix = "stdout-00"     # required if binlog-position-repo is specifiec
+              data-dir = "/tmp/mypipe/data" # defaults to mypipe.data-dir if not present
+            }
+          }
         }
-
-        # push events into kafka topics
-        # where each database-table tuple
-        # get their own topic
+    
         kafka-generic {
           enabled = true
-          consumers = ["database1"]
+          consumers = ["localhost"]
           producer {
             kafka-generic {
               metadata-brokers = "localhost:9092"
+            }
+          }
+          binlog-position-repo {
+            # saves to a MySQL database, make sure you use the following as well to prevent reacting on
+            # inserts / updates made in the same DB being listenened on for changes
+            # mypipe {
+            #   include-event-condition = """ table != "binlogpos" """
+            #   error {
+            #     quit-on-empty-mutation-commit-failure = false
+            #   }
+            # }
+            class = "mypipe.api.repo.ConfigurableMySQLBasedBinaryLogPositionRepository"
+            config {
+              # database "host:port:user:pass" array
+              source = "localhost:3306:mypipe:mypipe"
+              database = "mypipe"
+              table = "binlogpos"
+              id = "kafka-generic" # used to find the row in the table for this pipe
             }
           }
         }
       }
     }
 
-
+# mailing list
+https://groups.google.com/d/forum/mypipe

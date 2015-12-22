@@ -1,19 +1,21 @@
 package mypipe.pipe
 
 import akka.actor.{ ActorSystem, Cancellable }
-import mypipe.api.binlog.BinlogPositionSaver
 import mypipe.api.consumer.{ BinaryLogConsumer, BinaryLogConsumerListener }
 import mypipe.api.event.{ AlterEvent, Mutation }
 import mypipe.api.Conf
 import mypipe.api.producer.Producer
-import mypipe.mysql._
+import mypipe.api.repo.BinaryLogPositionRepository
+import mypipe.mysql.{ BinaryLogFilePosition, MySQLBinaryLogConsumer }
 import mypipe.util.Enum
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], producer: Producer) {
+case class Pipe[BinaryLogEvent](id: String, consumer: BinaryLogConsumer[BinaryLogEvent], producer: Producer, binlogPosRepo: BinaryLogPositionRepository) {
+
+  protected val filePrefix = id
 
   protected val log = LoggerFactory.getLogger(getClass)
 
@@ -24,25 +26,23 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
   @volatile protected var _connected: Boolean = false
   var state = State.STOPPED
 
-  protected val binlogPositionSaver = BinlogPositionSaver()
   protected var flusher: Option[Cancellable] = None
-  protected val listener = new BinaryLogConsumerListener[BinaryLogEvent, BinaryLogPosition]() {
+  protected val listener = new BinaryLogConsumerListener[BinaryLogEvent]() {
 
-    override def onStart(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
+    override def onStart(consumer: BinaryLogConsumer[BinaryLogEvent]) {
       log.info(s"Pipe $id connected!")
 
       state = State.STARTED
       _connected = true
 
       flusher = Some(system.scheduler.schedule(Conf.FLUSH_INTERVAL_SECS.seconds,
-        Conf.FLUSH_INTERVAL_SECS.seconds)(saveBinaryLogPosition(consumer)))
+        Conf.FLUSH_INTERVAL_SECS.seconds)(flushAndsaveBinaryLogPosition(consumer)))
     }
 
-    private def saveBinaryLogPosition(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
+    private def flushAndsaveBinaryLogPosition(consumer: BinaryLogConsumer[BinaryLogEvent]) {
       val binlogPos = consumer.getBinaryLogPosition
-      // TODO: we should be able to generically save the binary log position
-      if (producer.flush() && binlogPos.isDefined && binlogPos.get.isInstanceOf[BinaryLogFilePosition]) {
-        binlogPositionSaver.binlogSaveFilePosition(consumer.id, binlogPos.get.asInstanceOf[BinaryLogFilePosition], id)
+      if (producer.flush() && binlogPos.isDefined) {
+        binlogPosRepo.saveBinaryLogPosition(consumer)
       } else {
         if (binlogPos.isDefined)
           log.error(s"Producer ($producer) failed to flush, not saving binary log position: $binlogPos for consumer $consumer.")
@@ -51,23 +51,23 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
       }
     }
 
-    override def onStop(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition]) {
+    override def onStop(consumer: BinaryLogConsumer[BinaryLogEvent]) {
       log.info(s"Pipe $id disconnected!")
       _connected = false
       flusher.foreach(_.cancel())
-      saveBinaryLogPosition(consumer)
+      flushAndsaveBinaryLogPosition(consumer)
       state = State.STOPPED
     }
 
-    override def onMutation(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], mutation: Mutation): Boolean = {
+    override def onMutation(consumer: BinaryLogConsumer[BinaryLogEvent], mutation: Mutation): Boolean = {
       producer.queue(mutation)
     }
 
-    override def onMutation(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], mutations: Seq[Mutation]): Boolean = {
+    override def onMutation(consumer: BinaryLogConsumer[BinaryLogEvent], mutations: Seq[Mutation]): Boolean = {
       producer.queueList(mutations.toList)
     }
 
-    override def onTableAlter(consumer: BinaryLogConsumer[BinaryLogEvent, BinaryLogPosition], event: AlterEvent): Boolean = {
+    override def onTableAlter(consumer: BinaryLogConsumer[BinaryLogEvent], event: AlterEvent): Boolean = {
       producer.handleAlter(event)
     }
   }
@@ -102,13 +102,10 @@ case class Pipe[BinaryLogEvent, BinaryLogPosition](id: String, consumer: BinaryL
     }
   }
 
-  def loadPosition() {
-    // TODO: this is an ugly hack, make it generic
-    if (consumer.isInstanceOf[MySQLBinaryLogConsumer]) {
-      val binlogFileAndPos = binlogPositionSaver.binlogLoadFilePosition(consumer.id, pipeName = id)
-        .getOrElse(BinaryLogFilePosition.current)
-      consumer.asInstanceOf[MySQLBinaryLogConsumer].setBinaryLogPosition(binlogFileAndPos)
-    }
+  def loadPosition(): Unit = if (consumer.isInstanceOf[MySQLBinaryLogConsumer]) {
+    /* TODO: this is an ugly hack, make it generic*/
+    val binlogFileAndPos = binlogPosRepo.loadBinaryLogPosition(consumer).getOrElse(BinaryLogFilePosition.current)
+    consumer.asInstanceOf[MySQLBinaryLogConsumer].setBinaryLogPosition(binlogFileAndPos)
   }
 
   override def toString: String = id

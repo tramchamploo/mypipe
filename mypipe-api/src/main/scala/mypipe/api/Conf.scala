@@ -1,9 +1,8 @@
 package mypipe.api
 
-import java.io.{ File, PrintWriter }
+import java.io.File
 
 import com.typesafe.config.{ Config, ConfigFactory }
-import mypipe.mysql.BinaryLogFilePosition
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -22,6 +21,12 @@ object Conf {
         case s if s.nonEmpty ⇒ Some(s)
         case _               ⇒ None
       }
+    } else {
+      None
+    }
+
+    def getOptionalConfig(path: String): Option[Config] = if (underlying.hasPath(path)) {
+      Some(underlying.getConfig(path))
     } else {
       None
     }
@@ -53,6 +58,13 @@ object Conf {
   val MYSQL_HEARTBEAT_MAX_RETRY = MYSQL_CONF.getInt("heartbeat-max-retry")
   val MYSQL_DO_RECOVER_AFTER_DOWN = MYSQL_CONF.getBoolean("do-recover-after-down")
   val MYSQL_SECONDS_BEFORE_RECOVER_AFTER_DOWN = MYSQL_CONF.getInt("seconds-before-recover-after-down")
+
+  try {
+    new File(DATADIR).mkdirs()
+    new File(LOGDIR).mkdirs()
+  } catch {
+    case e: Exception ⇒ println(s"Error while creating data and log dir $DATADIR, $LOGDIR: ${e.getMessage}")
+  }
 
   def loadClassesForKey[T](key: String): Map[String, Option[Class[T]]] = {
     val classes = Conf.conf.getObject(key).asScala

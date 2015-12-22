@@ -18,7 +18,7 @@ import scala.concurrent.Future
 import scala.util.{ Failure, Try }
 
 abstract class AbstractMySQLBinaryLogConsumer
-    extends AbstractBinaryLogConsumer[MEvent, BinaryLogFilePosition]
+    extends AbstractBinaryLogConsumer[MEvent]
     with ClientPool {
 
   def setBinaryLogPosition(binlogFileAndPos: BinaryLogFilePosition): Unit = {
