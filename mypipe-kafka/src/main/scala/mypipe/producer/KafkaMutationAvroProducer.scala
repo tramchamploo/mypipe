@@ -75,7 +75,7 @@ abstract class KafkaMutationAvroProducer[SchemaId](config: Config)
       true
     } catch {
       case e: Exception ⇒ {
-        logger.error(s"Could not flush producer queue: ${e.getMessage} -> ${e.getStackTraceString}")
+        logger.error(s"Could not flush producer queue: ${e.getMessage} -> ", e)
         false
       }
     }
