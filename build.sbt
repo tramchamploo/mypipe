@@ -2,7 +2,7 @@ import Dependencies._
 
 lazy val commonSettings = Seq(
   name := "mypipe",
-  version := "0.0.1",
+  version := "0.0.2",
   organization := "mypipe",
   scalaVersion := "2.11.7",
   exportJars := true,
@@ -71,6 +71,7 @@ lazy val kafkaDependencies = Seq(
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(name := "mypipe").
+  settings(noPublishSettings: _*).
   aggregate(api, producers, runner, snapshotter, myavro, mykafka)
 
 lazy val runner = (project in file("mypipe-runner")).
@@ -79,7 +80,8 @@ lazy val runner = (project in file("mypipe-runner")).
     name := "runner",
     fork in run := false,
     libraryDependencies ++= runnerDependencies).
-  settings(Format.settings) dependsOn(api, producers, myavro, mykafka)
+  settings(Format.settings).
+  settings(noPublishSettings: _*) dependsOn(api, producers, myavro, mykafka)
 
 lazy val snapshotter = (project in file("mypipe-snapshotter")).
   settings(commonSettings: _*).
@@ -87,7 +89,8 @@ lazy val snapshotter = (project in file("mypipe-snapshotter")).
     name := "snapshotter",
     fork in run := false,
     libraryDependencies ++= snapshotterDependencies).
-  settings(Format.settings) dependsOn(api % "compile->compile;test->test", producers, myavro, mykafka, runner)
+  settings(Format.settings).
+  settings(noPublishSettings: _*) dependsOn(api % "compile->compile;test->test", producers, myavro, mykafka, runner)
 
 lazy val producers = (project in file("mypipe-producers")).
   settings(commonSettings: _*).
@@ -95,7 +98,8 @@ lazy val producers = (project in file("mypipe-producers")).
     name := "producers",
     fork in run := false,
     libraryDependencies ++= producersDependencies).
-  settings(Format.settings) dependsOn(api)
+  settings(Format.settings).
+  settings(noPublishSettings: _*) dependsOn(api)
 
 lazy val api = (project in file("mypipe-api")).
   settings(commonSettings: _*).
@@ -104,7 +108,8 @@ lazy val api = (project in file("mypipe-api")).
     fork in run := false,
     libraryDependencies ++= apiDependencies,
     parallelExecution in Test := false).
-  settings(Format.settings)
+  settings(Format.settings).
+  settings(noPublishSettings: _*)
 
 lazy val myavro = (project in file("mypipe-avro")).
   settings(commonSettings: _*).
@@ -114,7 +119,8 @@ lazy val myavro = (project in file("mypipe-avro")).
     libraryDependencies ++= avroDependencies,
     parallelExecution in Test := false).
   settings(AvroCompiler.settingsCompile).
-  settings(Format.settings) dependsOn(api % "compile->compile;test->test")
+  settings(Format.settings).
+  settings(noPublishSettings: _*) dependsOn(api % "compile->compile;test->test")
 
 lazy val mykafka = (project in file("mypipe-kafka")).
   settings(commonSettings: _*).
@@ -124,5 +130,32 @@ lazy val mykafka = (project in file("mypipe-kafka")).
     libraryDependencies ++= kafkaDependencies,
     parallelExecution in Test := false).
   settings(AvroCompiler.settingsTest).
-  settings(Format.settings) dependsOn(api % "compile->compile;test->test", myavro)
+  settings(Format.settings).
+  settings(publishSettings: _*) dependsOn(api % "compile->compile;test->test", myavro)
 
+lazy val noPublishSettings = Seq(
+  publish := (),
+  publishLocal := (),
+  publishArtifact := false
+)
+
+lazy val publishSettings = Seq(
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  publishTo := {
+    val nexus = "http://nexus.jcndev.com/nexus/"
+    if (isSnapshot.value)
+      Some("snapshots" at nexus + "content/repositories/snapshots")
+    else
+      Some("releases" at nexus + "content/repositories/releases")
+  },
+  credentials += Credentials("Sonatype Nexus Repository Manager", "nexus.jcndev.com", "ltj", "ltj"),
+  pomExtra :=
+    <developers>
+      <developer>
+        <id>guohang.bao</id>
+        <name>guohang.bao</name>
+        <url>http://github.com/tramchamploo</url>
+      </developer>
+    </developers>
+)
