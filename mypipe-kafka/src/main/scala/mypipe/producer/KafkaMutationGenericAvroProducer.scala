@@ -1,5 +1,9 @@
 package mypipe.producer
 
+import java.lang.{ Long ⇒ JLong }
+import java.sql.Timestamp
+import java.util.{ HashMap ⇒ JMap }
+
 import com.typesafe.config.Config
 import mypipe.api.data.{ Column, ColumnType }
 import mypipe.api.event._
@@ -7,8 +11,6 @@ import mypipe.avro.schema.AvroSchemaUtils
 import mypipe.avro.{ AvroVersionedRecordSerializer, GenericInMemorySchemaRepo }
 import mypipe.kafka.KafkaUtil
 import org.apache.avro.Schema
-import java.lang.{ Long ⇒ JLong }
-import java.util.{ HashMap ⇒ JMap }
 import org.apache.avro.generic.GenericData
 
 object KafkaMutationGenericAvroProducer {
@@ -118,6 +120,12 @@ class KafkaMutationGenericAvroProducer(config: Config)
           }
 
           if (v != null) longs.put(c.metadata.name, v)
+        })
+
+      case (ColumnType.TIMESTAMP, colz) ⇒
+        colz.foreach(c ⇒ {
+          val v = c.valueOption[Timestamp]
+          if (v.isDefined) longs.put(c.metadata.name, v.get.getTime)
         })
 
       case _ ⇒ // unsupported

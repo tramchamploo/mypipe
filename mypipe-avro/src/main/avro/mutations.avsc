@@ -28,6 +28,10 @@
     		    "type": ["null", "Guid"],
     		    "default": "null"
     		},
+            {
+                "name": "timestamp",
+                "type": "long"
+            },
     		{
     			"name": "integers",
     			"type": {"type": "map", "values": "int"}
@@ -65,6 +69,10 @@
     		    "type": ["null", "Guid"],
     		    "default": "null"
     		},
+            {
+                "name": "timestamp",
+                "type": "long"
+            },
     		{
     			"name": "old_integers",
     			"type": {"type": "map", "values": "int"}
@@ -116,6 +124,10 @@
     		    "type": ["null", "Guid"],
     		    "default": "null"
     		},
+            {
+                "name": "timestamp",
+                "type": "long"
+            },
     		{
     			"name": "integers",
     			"type": {"type": "map", "values": "int"}

@@ -127,6 +127,7 @@ abstract class KafkaMutationAvroProducer[SchemaId](config: Config)
     record.put("database", mutation.table.db)
     record.put("table", mutation.table.name)
     record.put("tableId", mutation.table.id)
+    record.put("timestamp", mutation.timestamp)
 
     // TODO: avoid null check
     if (mutation.txid != null && record.getSchema().getField("txid") != null) {
