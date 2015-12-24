@@ -2,7 +2,7 @@ import Dependencies._
 
 lazy val commonSettings = Seq(
   name := "mypipe",
-  version := "0.0.2",
+  version := "0.0.2-SNAPSHOT",
   organization := "mypipe",
   scalaVersion := "2.11.7",
   exportJars := true,
@@ -109,7 +109,7 @@ lazy val api = (project in file("mypipe-api")).
     libraryDependencies ++= apiDependencies,
     parallelExecution in Test := false).
   settings(Format.settings).
-  settings(noPublishSettings: _*)
+  settings(publishSettings: _*)
 
 lazy val myavro = (project in file("mypipe-avro")).
   settings(commonSettings: _*).
@@ -120,7 +120,7 @@ lazy val myavro = (project in file("mypipe-avro")).
     parallelExecution in Test := false).
   settings(AvroCompiler.settingsCompile).
   settings(Format.settings).
-  settings(noPublishSettings: _*) dependsOn(api % "compile->compile;test->test")
+  settings(publishSettings: _*) dependsOn(api % "compile->compile;test->test")
 
 lazy val mykafka = (project in file("mypipe-kafka")).
   settings(commonSettings: _*).
