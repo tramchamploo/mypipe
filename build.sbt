@@ -6,6 +6,7 @@ lazy val commonSettings = Seq(
   organization := "mypipe",
   scalaVersion := "2.11.7",
   exportJars := true,
+  retrieveManaged := true,
   parallelExecution in ThisBuild := false,
   resolvers ++= Seq(Resolver.mavenLocal,
     "Sonatype OSS Releases" at "http://oss.sonatype.org/content/repositories/releases/",

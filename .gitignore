@@ -5,6 +5,7 @@
 project/project
 project/target
 target/
+lib_managed/
 run.sh
 *.overrides.conf
 logs/
