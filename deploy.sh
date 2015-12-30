@@ -14,6 +14,6 @@ pkill -f "mypipe.runner.PipeRunner"
 
 echo "mypipe stopped!"
 
-java mypipe.runner.PipeRunner
+java mypipe.runner.PipeRunner >> /var/log/mypipe.log 2>&1 &
 
 echo "mypipe started!"
