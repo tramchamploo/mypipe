@@ -65,7 +65,7 @@ abstract class KafkaMutationAvroConsumer[InsertMutationType <: SpecificRecord, U
     }
   } catch {
     case e: Exception ⇒
-      log.error("Could not run callback on " + bytes.mkString + " => " + e.getMessage + "\n" + e.getStackTraceString)
+      log.error("Could not run callback on " + bytes.mkString + " => ", e)
       false
   }
 }
