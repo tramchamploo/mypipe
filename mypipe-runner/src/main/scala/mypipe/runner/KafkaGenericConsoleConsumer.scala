@@ -33,7 +33,10 @@ object KafkaGenericConsoleConsumer extends App {
         * @param bytes the message
         * @return true to continue reading messages, false to stop
         */
-      override def onEvent(bytes: Array[Byte]): Boolean = log.info(bytes)
+      override def onEvent(bytes: Array[Byte]): Boolean = {
+        log.info(bytes.mkString)
+        true
+      }
     }
 
     consumer.start
