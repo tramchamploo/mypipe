@@ -1,5 +1,6 @@
 package mypipe.runner
 
+import mypipe.kafka.KafkaConsumer
 import mypipe.kafka.consumer.GenericConsoleConsumer
 
 object KafkaGenericConsoleConsumer extends App {
@@ -25,12 +26,20 @@ object KafkaGenericConsoleConsumer extends App {
   val groupIdPrefix = "mypipe-test"
 
   topics.indices zip topics foreach { case (i, topic) =>
-    val consumer = new GenericConsoleConsumer(topic = topic, zkConnect = zkConnect, groupId = groupIdPrefix + i)
+    val consumer = new KafkaConsumer(topic = topic, zkConnect = zkConnect, groupId = groupIdPrefix + i) {
+      /** Called every time a new message is pulled from
+        * the Kafka topic.
+        *
+        * @param bytes the message
+        * @return true to continue reading messages, false to stop
+        */
+      override def onEvent(bytes: Array[Byte]): Boolean = log.info(bytes)
+    }
 
     consumer.start
 
     sys.addShutdownHook({
-      consumer.stop()
+      consumer.stop
     })
 
   }
