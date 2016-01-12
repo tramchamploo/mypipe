@@ -27,6 +27,7 @@ object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.2.1"
   val xinject = "javax.inject" % "javax.inject" % "1"
   val curator = "org.apache.curator" % "curator-recipes" % "2.9.1"
+  val xmlClient = "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3"
 }
 
 object AvroCompiler {

@@ -1,8 +1,9 @@
 package mypipe.mysql
 
+import java.net.InetAddress
 import java.util.concurrent.{ LinkedBlockingQueue, TimeUnit }
 
-import akka.actor.{ ActorSystem, Cancellable }
+import akka.actor.Cancellable
 import com.github.mauricio.async.db.mysql.MySQLConnection
 import com.github.mauricio.async.db.{ Configuration, Connection }
 import com.github.shyiko.mysql.binlog.BinaryLogClient
@@ -12,7 +13,7 @@ import mypipe.api.data.Table
 import mypipe.api.event._
 import mypipe.api.{ Conf, HostPortUserPass }
 import mypipe.util
-import mypipe.util.{ Eval, Listenable, Listener }
+import mypipe.util.{ Eval, Listener, Paperboy }
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
@@ -36,7 +37,7 @@ trait ClientPool extends Connections {
   def getClientInfo: HostPortUserPass
 }
 
-trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
+trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections with Paperboy {
 
   private val log = LoggerFactory.getLogger(getClass)
   protected val pool = new LinkedBlockingQueue[BinaryLogClient]()
@@ -61,7 +62,9 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections {
     case Some(client) ⇒
       if (current != client) current = client
       client
-    case None ⇒ throw new RuntimeException("No available client at the time!")
+    case None ⇒
+      paperboy.error("No available client at the time! host:" + InetAddress.getLocalHost().getHostName(), "mypipe")
+      throw new RuntimeException("No available client at the time!")
   }
 
   def getClientInfo: HostPortUserPass = instances(getClient)
@@ -74,17 +77,15 @@ trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBi
   protected var heartbeatThread: Cancellable = null
   protected var recoveryThread: Cancellable = null
 
-  override def getClient: BinaryLogClient = Option(pool.peek()) match {
-    case Some(client) ⇒
-      if (current != client) current = client
+  override def getClient: BinaryLogClient = {
+    val client = super.getClient
 
-      if (heartBeat == null) {
-        heartBeat = newHeartBeat(instances(current))
-        heartbeatThread = heartBeat.beat()
-      }
+    if (heartBeat == null) {
+      heartBeat = newHeartBeat(instances(current))
+      heartbeatThread = heartBeat.beat()
+    }
 
-      client
-    case None ⇒ throw new RuntimeException("No available client at the time!")
+    client
   }
 
   def newHeartBeat(info: HostPortUserPass) = {
@@ -97,11 +98,14 @@ trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBi
         val nextInfo = instances(next)
 
         if (next != null && !next.isConnected) {
+          // start new connection
           log.error(s"Switching to another mysql instance..., [${nextInfo.host}:${nextInfo.port}], " +
             s"binlog file: ${prev.getBinlogFilename}, pos: ${prev.getBinlogPosition}")
           next.setBinlogFilename(prev.getBinlogFilename)
           next.setBinlogPosition(prev.getBinlogPosition)
           onStart()
+          // close old connection
+          prev.disconnect()
         }
 
         heartBeat = null
