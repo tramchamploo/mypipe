@@ -26,7 +26,7 @@ class SelectConsumer(override val config: Config)
     with ConfigBasedEventSkippingBehaviour
     with CacheableTableMapBehaviour
     with ConfigLoader
-    with HeartBeatClientPool {
+    with SimpleClientPool {
 
   private val clientInfo = getClientInfo
   private val system = ActorSystem("mypipe-snapshotter")

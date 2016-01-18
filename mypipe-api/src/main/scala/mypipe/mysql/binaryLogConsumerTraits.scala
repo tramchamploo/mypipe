@@ -37,7 +37,7 @@ trait ClientPool extends Connections {
   def getClientInfo: HostPortUserPass
 }
 
-trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections with Paperboy {
+trait SimpleClientPool extends ClientPool with ConfigBasedConnections with Paperboy {
 
   private val log = LoggerFactory.getLogger(getClass)
   protected val pool = new LinkedBlockingQueue[BinaryLogClient]()
@@ -71,7 +71,7 @@ trait HeartBeatClientPool extends ClientPool with ConfigBasedConnections with Pa
 
 }
 
-trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBinaryLogConsumer ⇒
+trait HeartBeatClientPool extends SimpleClientPool { self: MySQLBinaryLogConsumer ⇒
 
   protected var heartBeat: HeartBeat = null
   protected var heartbeatThread: Cancellable = null
@@ -92,6 +92,8 @@ trait HeartBeatClientWithOnStartPool extends HeartBeatClientPool { self: MySQLBi
     val hb = new HeartBeat(info.host, info.port, info.user, info.password) {
 
       override def onFailure() = {
+        paperboy.error(s"Mysql instance is down! ${info.host}:${info.port}", "mypipe")
+
         val prev = pool.poll(5, TimeUnit.SECONDS)
 
         val next = pool.peek()
@@ -293,7 +295,7 @@ class ConfigBasedErrorHandler[BinaryLogEvent] extends BinaryLogConsumerErrorHand
   }
 }
 
-trait CacheableTableMapBehaviour extends BinaryLogConsumerTableFinder with HeartBeatClientPool {
+trait CacheableTableMapBehaviour extends BinaryLogConsumerTableFinder with SimpleClientPool {
 
   private var _tableInfo: HostPortUserPass = null
   private var _tableCache: TableCache = null
