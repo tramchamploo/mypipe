@@ -1,145 +1,575 @@
 [
-    {
-      "namespace": "mypipe.avro",
-      "name":"Guid",
-      "type":"fixed",
-      "size":16
-    },
+  {
+    "namespace": "mypipe.avro",
+    "name": "Guid",
+    "type": "fixed",
+    "size": 16
+  },
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "InsertMutation",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "long"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "timestamp",
+        "type": "long"
+      },
+      {
+        "name": "integers",
+        "type": {
+          "type": "map",
+          "values": "int"
+        }
+      },
+      {
+        "name": "strings",
+        "type": {
+          "type": "map",
+          "values": "string"
+        }
+      },
+      {
+        "name": "longs",
+        "type": {
+          "type": "map",
+          "values": "long"
+        }
+      }
+    ]
+  },
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "UpdateMutation",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "long"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "timestamp",
+        "type": "long"
+      },
+      {
+        "name": "old_integers",
+        "type": {
+          "type": "map",
+          "values": "int"
+        }
+      },
+      {
+        "name": "old_strings",
+        "type": {
+          "type": "map",
+          "values": "string"
+        }
+      },
+      {
+        "name": "old_longs",
+        "type": {
+          "type": "map",
+          "values": "long"
+        }
+      },
+      {
+        "name": "new_integers",
+        "type": {
+          "type": "map",
+          "values": "int"
+        }
+      },
+      {
+        "name": "new_strings",
+        "type": {
+          "type": "map",
+          "values": "string"
+        }
+      },
+      {
+        "name": "new_longs",
+        "type": {
+          "type": "map",
+          "values": "long"
+        }
+      }
+    ]
+  },
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "DeleteMutation",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "long"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "timestamp",
+        "type": "long"
+      },
+      {
+        "name": "integers",
+        "type": {
+          "type": "map",
+          "values": "int"
+        }
+      },
+      {
+        "name": "strings",
+        "type": {
+          "type": "map",
+          "values": "string"
+        }
+      },
+      {
+        "name": "longs",
+        "type": {
+          "type": "map",
+          "values": "long"
+        }
+      }
+    ]
+  },
 
-    {
-      "namespace": "mypipe.avro",
-      "type": "record",
-      "name": "InsertMutation",
-      "fields": [
-    	    {
-    			"name": "database",
-    			"type": "string"
-    		},
-    		{
-    			"name": "table",
-    			"type": "string"
-    		},
-    		{
-    			"name": "tableId",
-    			"type": "long"
-    		},
-    		{
-    		    "name": "txid",
-    		    "type": ["null", "Guid"],
-    		    "default": "null"
-    		},
-            {
-                "name": "timestamp",
-                "type": "long"
-            },
-    		{
-    			"name": "integers",
-    			"type": {"type": "map", "values": "int"}
-    		},
-    		{
-    			"name": "strings",
-    			"type": {"type": "map", "values": "string"}
-    		},
-    		{
-    			"name": "longs",
-    			"type": {"type": "map", "values": "long"}
-    		}
-    	]
-    },
-
-    {
-      "namespace": "mypipe.avro",
-      "type": "record",
-      "name": "UpdateMutation",
-      "fields": [
-    	    {
-    			"name": "database",
-    			"type": "string"
-    		},
-    		{
-    			"name": "table",
-    			"type": "string"
-    		},
-    		{
-    			"name": "tableId",
-    			"type": "long"
-    		},
-    		{
-    		    "name": "txid",
-    		    "type": ["null", "Guid"],
-    		    "default": "null"
-    		},
-            {
-                "name": "timestamp",
-                "type": "long"
-            },
-    		{
-    			"name": "old_integers",
-    			"type": {"type": "map", "values": "int"}
-    		},
-    		{
-    			"name": "old_strings",
-    			"type": {"type": "map", "values": "string"}
-    		},
-    		{
-
-    			"name": "old_longs",
-    			"type": {"type": "map", "values": "long"}
-    		},
-    		{
-    			"name": "new_integers",
-    			"type": {"type": "map", "values": "int"}
-    		},
-    		{
-    			"name": "new_strings",
-    			"type": {"type": "map", "values": "string"}
-    		},
-    		{
-
-    			"name": "new_longs",
-    			"type": {"type": "map", "values": "long"}
-    		}
-    	]
-    },
-
-    {
-      "namespace": "mypipe.avro",
-      "type": "record",
-      "name": "DeleteMutation",
-      "fields": [
-    	    {
-    			"name": "database",
-    			"type": "string"
-    		},
-    		{
-    			"name": "table",
-    			"type": "string"
-    		},
-    		{
-    			"name": "tableId",
-    			"type": "long"
-    		},
-    		{
-    		    "name": "txid",
-    		    "type": ["null", "Guid"],
-    		    "default": "null"
-    		},
-            {
-                "name": "timestamp",
-                "type": "long"
-            },
-    		{
-    			"name": "integers",
-    			"type": {"type": "map", "values": "int"}
-    		},
-    		{
-    			"name": "strings",
-    			"type": {"type": "map", "values": "string"}
-    		},
-    		{
-    			"name": "longs",
-    			"type": {"type": "map", "values": "long"}
-    		}
-    	]
-    }
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "ForumPostInsert",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "int"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "mypipe.avro.Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "root_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "user_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "parent_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "level",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "status",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "path",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "create_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "auditor",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "audit_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "last_update_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    ]
+  },
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "ForumPostDelete",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "int"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "mypipe.avro.Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "root_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "user_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "parent_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "level",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "status",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "path",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "create_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "auditor",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "audit_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "last_update_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    ]
+  },
+  {
+    "namespace": "mypipe.avro",
+    "type": "record",
+    "name": "ForumPostUpdate",
+    "fields": [
+      {
+        "name": "database",
+        "type": "string"
+      },
+      {
+        "name": "table",
+        "type": "string"
+      },
+      {
+        "name": "tableId",
+        "type": "int"
+      },
+      {
+        "name": "txid",
+        "type": [
+          "null",
+          "mypipe.avro.Guid"
+        ],
+        "default": "null"
+      },
+      {
+        "name": "old_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "new_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "old_root_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "new_root_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "old_user_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "new_user_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "old_parent_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "new_parent_id",
+        "type": [
+          "long",
+          "null"
+        ]
+      },
+      {
+        "name": "old_level",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "new_level",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "old_status",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "new_status",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "old_path",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "new_path",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "old_create_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "new_create_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "old_auditor",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "new_auditor",
+        "type": [
+          "int",
+          "null"
+        ]
+      },
+      {
+        "name": "old_audit_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "new_audit_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "old_last_update_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "new_last_update_time",
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    ]
+  }
 ]
