@@ -209,6 +209,10 @@
         "default": "null"
       },
       {
+        "name": "timestamp",
+        "type": "long"
+      },
+      {
         "name": "id",
         "type": [
           "long",
@@ -313,6 +317,10 @@
         "default": "null"
       },
       {
+        "name": "timestamp",
+        "type": "long"
+      },
+      {
         "name": "id",
         "type": [
           "long",
@@ -415,6 +423,10 @@
           "mypipe.avro.Guid"
         ],
         "default": "null"
+      },
+      {
+        "name": "timestamp",
+        "type": "long"
       },
       {
         "name": "old_id",
