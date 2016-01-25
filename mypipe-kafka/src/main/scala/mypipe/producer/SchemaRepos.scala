@@ -16,5 +16,5 @@ object ForumPostSchemaRepo extends InMemorySchemaRepo[Short, Schema] with ShortS
     registerSchema(AvroSchemaUtils.specificSubject(DATABASE, s"forum_post_p$i", Mutation.UpdateString), new ForumPostUpdate().getSchema)
     registerSchema(AvroSchemaUtils.specificSubject(DATABASE, s"forum_post_p$i", Mutation.DeleteString), new ForumPostDelete().getSchema)
   }
-  
+
 }
