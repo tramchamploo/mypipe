@@ -55,11 +55,16 @@ class KafkaMutationSpecificAvroProducer(config: Config)
    */
   override protected def avroSchemaSubject(mutation: Mutation): String = AvroSchemaUtils.specificSubject(mutation)
 
+  private def putInRecord(record: GenericData.Record, key: String, value: Any) = value match {
+    case v: java.util.Date ⇒ record.put(key, v.getTime)
+    case _                 ⇒ record.put(key, value)
+  }
+
   protected def insertOrDeleteMutationToAvro(mutation: SingleValuedMutation, schema: Schema): List[GenericData.Record] = {
 
     mutation.rows.map(row ⇒ {
       val record = new GenericData.Record(schema)
-      row.columns.foreach(col ⇒ Option(schema.getField(col._1)).foreach(f ⇒ record.put(f.name(), col._2.value)))
+      row.columns.foreach(col ⇒ Option(schema.getField(col._1)).foreach(f ⇒ putInRecord(record, f.name(), col._2.value)))
       header(record, mutation)
       record
     })
@@ -69,8 +74,8 @@ class KafkaMutationSpecificAvroProducer(config: Config)
 
     mutation.rows.map(row ⇒ {
       val record = new GenericData.Record(schema)
-      row._1.columns.foreach(col ⇒ Option(schema.getField("old_" + col._1)).foreach(f ⇒ record.put(f.name(), col._2.value)))
-      row._2.columns.foreach(col ⇒ Option(schema.getField("new_" + col._1)).foreach(f ⇒ record.put(f.name(), col._2.value)))
+      row._1.columns.foreach(col ⇒ Option(schema.getField("old_" + col._1)).foreach(f ⇒ putInRecord(record, f.name(), col._2.value)))
+      row._2.columns.foreach(col ⇒ Option(schema.getField("new_" + col._1)).foreach(f ⇒ putInRecord(record, f.name(), col._2.value)))
       header(record, mutation)
       record
     })
