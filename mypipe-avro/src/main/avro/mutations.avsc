@@ -264,7 +264,7 @@
       {
         "name": "create_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
@@ -278,14 +278,14 @@
       {
         "name": "audit_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "last_update_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       }
@@ -372,7 +372,7 @@
       {
         "name": "create_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
@@ -386,14 +386,14 @@
       {
         "name": "audit_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "last_update_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       }
@@ -529,14 +529,14 @@
       {
         "name": "old_create_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "new_create_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
@@ -557,28 +557,28 @@
       {
         "name": "old_audit_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "new_audit_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "old_last_update_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       },
       {
         "name": "new_last_update_time",
         "type": [
-          "string",
+          "long",
           "null"
         ]
       }
