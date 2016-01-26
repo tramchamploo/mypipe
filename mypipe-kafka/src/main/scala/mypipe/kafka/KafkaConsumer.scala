@@ -3,7 +3,7 @@ package mypipe.kafka
 import org.slf4j.LoggerFactory
 import scala.concurrent._
 import ExecutionContext.Implicits.global
-import kafka.consumer.{ ConsumerConfig, Consumer ⇒ KConsumer, ConsumerConnector }
+import kafka.consumer.{ConsumerConfig, Consumer ⇒ KConsumer, ConsumerConnector}
 import java.util.Properties
 import scala.annotation.tailrec
 
@@ -68,7 +68,7 @@ abstract class KafkaConsumer(topic: String, zkConnect: String, groupId: String) 
 
 class KafkaIterator(topic: String, zkConnect: String, groupId: String) {
   protected val consumerConnector = createConsumerConnector(zkConnect, groupId)
-  protected val mapStreams = consumerConnector.createMessageStreams(Map(topic -> 1))
+  protected val mapStreams = consumerConnector.createMessageStreams(Map(topic → 1))
   protected val stream = mapStreams.get(topic).get.head
   protected val consumerIterator = stream.iterator()
 

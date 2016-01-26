@@ -30,7 +30,7 @@ class PaperboyLogger(host: String, port: Int) {
 
   def withLevel(level: Symbol)(msg: ⇒ String, category: ⇒ String) {
     try {
-      rpcClient.execute("log", List(Map("t" -> new DateTime().getMillis / 1000.0, "c" -> category, "l" -> level.name, "m" -> msg)))
+      rpcClient.execute("log", List(Map("t" → (new DateTime().getMillis / 1000.0), "c" → category, "l" → level.name, "m" → msg)))
     } catch {
       case e: XmlRpcException ⇒ selfLogger.error(e.getMessage, e);
     }

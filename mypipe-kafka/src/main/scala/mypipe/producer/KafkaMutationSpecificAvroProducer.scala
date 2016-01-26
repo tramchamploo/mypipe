@@ -1,8 +1,8 @@
 package mypipe.producer
 
 import com.typesafe.config.Config
-import mypipe.api.event.{ AlterEvent, UpdateMutation, SingleValuedMutation, Mutation }
-import mypipe.avro.schema.{ AvroSchemaUtils, GenericSchemaRepository }
+import mypipe.api.event.{AlterEvent, UpdateMutation, SingleValuedMutation, Mutation}
+import mypipe.avro.schema.{AvroSchemaUtils, GenericSchemaRepository}
 import mypipe.avro.AvroVersionedRecordSerializer
 import mypipe.kafka.KafkaUtil
 import org.apache.avro.Schema

@@ -1,16 +1,16 @@
 package mypipe.runner
 
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{Config, ConfigFactory}
 import mypipe.api.Conf
 import mypipe.api.Conf.RichConfig
 import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
-import mypipe.api.repo.{ BinaryLogPositionRepositoryFromConfiguration, ConfigurableBinaryLogPositionRepository, FileBasedBinaryLogPositionRepository }
-import mypipe.mysql.{ BinaryLogFilePosition, MySQLBinaryLogConsumer }
-import mypipe.pipe.{ Pipe, _ }
-import org.apache.curator.framework.recipes.leader.{ CancelLeadershipException, LeaderSelector, LeaderSelectorListener }
+import mypipe.api.repo.{BinaryLogPositionRepositoryFromConfiguration, ConfigurableBinaryLogPositionRepository, FileBasedBinaryLogPositionRepository}
+import mypipe.mysql.{BinaryLogFilePosition, MySQLBinaryLogConsumer}
+import mypipe.pipe.{Pipe, _}
+import org.apache.curator.framework.recipes.leader.{CancelLeadershipException, LeaderSelector, LeaderSelectorListener}
 import org.apache.curator.framework.state.ConnectionState
-import org.apache.curator.framework.{ CuratorFramework, CuratorFrameworkFactory }
+import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.RetryUntilElapsed
 import org.slf4j.LoggerFactory
 
@@ -29,8 +29,10 @@ object PipeRunner extends App {
   lazy val consumers: Seq[(String, Config, Option[Class[BinaryLogConsumer[_]]])] = loadConsumerConfigs(conf, "mypipe.consumers")
   lazy val pipes: Seq[Pipe[_]] = createPipes(conf, "mypipe.pipes", producers, consumers)
 
-  val zkClient = CuratorFrameworkFactory.newClient(conf.getString("mypipe.zk.conn"),
-    new RetryUntilElapsed(Option(conf.getInt("mypipe.zk.max-retry-seconds")).getOrElse(20) * 1000, 1000))
+  val zkClient = CuratorFrameworkFactory.newClient(
+    conf.getString("mypipe.zk.conn"),
+    new RetryUntilElapsed(Option(conf.getInt("mypipe.zk.max-retry-seconds")).getOrElse(20) * 1000, 1000)
+  )
 
   if (pipes.isEmpty) {
     log.info("No pipes defined, exiting.")
@@ -92,10 +94,12 @@ object PipeRunnerUtil {
     }).toSeq
   }
 
-  def createPipes(conf: Config,
-                  key: String,
-                  producerClasses: Map[String, Option[Class[Producer]]],
-                  consumerConfigs: Seq[(String, Config, Option[Class[BinaryLogConsumer[_]]])]): Seq[Pipe[_]] = {
+  def createPipes(
+    conf:            Config,
+    key:             String,
+    producerClasses: Map[String, Option[Class[Producer]]],
+    consumerConfigs: Seq[(String, Config, Option[Class[BinaryLogConsumer[_]]])]
+  ): Seq[Pipe[_]] = {
 
     val pipes = conf.getObject(key).asScala
 
@@ -164,7 +168,8 @@ object PipeRunnerUtil {
         case Some(clazz) ⇒
           val consumer = {
             clazz.getConstructors.find(
-              _.getParameterTypes.headOption.exists(_.equals(classOf[Config])))
+              _.getParameterTypes.headOption.exists(_.equals(classOf[Config]))
+            )
               .map(_.newInstance(params._2))
               .getOrElse(clazz.newInstance())
           }

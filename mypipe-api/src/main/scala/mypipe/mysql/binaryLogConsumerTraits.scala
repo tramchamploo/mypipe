@@ -1,26 +1,26 @@
 package mypipe.mysql
 
 import java.net.InetAddress
-import java.util.concurrent.{ LinkedBlockingQueue, TimeUnit }
+import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import akka.actor.Cancellable
 import com.github.mauricio.async.db.mysql.MySQLConnection
-import com.github.mauricio.async.db.{ Configuration, Connection }
+import com.github.mauricio.async.db.{Configuration, Connection}
 import com.github.shyiko.mysql.binlog.BinaryLogClient
 import com.typesafe.config.Config
-import mypipe.api.consumer.{ BinaryLogConsumer, BinaryLogConsumerErrorHandler, BinaryLogConsumerListener, BinaryLogConsumerTableFinder }
+import mypipe.api.consumer.{BinaryLogConsumer, BinaryLogConsumerErrorHandler, BinaryLogConsumerListener, BinaryLogConsumerTableFinder}
 import mypipe.api.data.Table
 import mypipe.api.event._
-import mypipe.api.{ Conf, HostPortUserPass }
+import mypipe.api.{Conf, HostPortUserPass}
 import mypipe.util
-import mypipe.util.{ Eval, Listener, Paperboy }
+import mypipe.util.{Eval, Listener, Paperboy}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.HashMap
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait Connections {
   val configs: List[HostPortUserPass]
@@ -52,7 +52,7 @@ trait SimpleClientPool extends ClientPool with ConfigBasedConnections with Paper
         log.info(s"Adding mysql client to pool: ${i.host}:${i.port}")
 
         pool.offer(c)
-        instances += c -> i
+        instances += c → i
 
       case Failure(e) ⇒ log.error("BinaryLogClient init error: ", e)
     }

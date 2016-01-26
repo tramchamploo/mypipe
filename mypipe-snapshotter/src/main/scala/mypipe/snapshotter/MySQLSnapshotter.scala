@@ -1,9 +1,9 @@
 package mypipe.snapshotter
 
-import com.github.mauricio.async.db.{ Connection, QueryResult }
+import com.github.mauricio.async.db.{Connection, QueryResult}
 import mypipe.mysql.BinaryLogFilePosition
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 object MySQLSnapshotter {
 
@@ -23,7 +23,7 @@ object MySQLSnapshotter {
 
   def snapshot(tables: Seq[String], withTransaction: Boolean = true)(implicit c: Connection, ec: ExecutionContext): Future[Seq[(String, QueryResult)]] = {
     val tableQueries = tables
-      .map({ t ⇒ (t -> useDatabase(t), t -> selectFrom(t)) })
+      .map({ t ⇒ (t → useDatabase(t), t → selectFrom(t)) })
       .foldLeft(List.empty[(String, String)]) { (acc: List[(String, String)], v: ((String, String), (String, String))) ⇒
         acc ++ List(v._1, v._2)
       }
@@ -63,22 +63,25 @@ object MySQLSnapshotter {
   }
 
   private def queriesWithoutTxn(tableQueries: Seq[(String, String)]) = Seq(
-    "showMasterStatus" -> showMasterStatus) ++ tableQueries
+    "showMasterStatus" → showMasterStatus
+  ) ++ tableQueries
 
   private def queriesWithTxn(tableQueries: Seq[(String, String)]) = Seq(
-    "" -> trxIsolationLevel,
-    "" -> autoCommit,
-    "" -> flushTables,
-    "" -> readLock,
-    "showMasterStatus" -> showMasterStatus,
-    "" -> unlockTables) ++ tableQueries ++ Seq(
-      "" -> commit)
+    "" → trxIsolationLevel,
+    "" → autoCommit,
+    "" → flushTables,
+    "" → readLock,
+    "showMasterStatus" → showMasterStatus,
+    "" → unlockTables
+  ) ++ tableQueries ++ Seq(
+      "" → commit
+    )
 
   private def runQueries(queries: Seq[(String, String)])(implicit c: Connection, ec: ExecutionContext): Future[Seq[(String, QueryResult)]] = {
     queries.foldLeft[Future[Seq[(String, QueryResult)]]](Future.successful(Seq.empty)) { (future, query) ⇒
       future flatMap { queryResults ⇒
         if (!query._1.isEmpty) {
-          c.sendQuery(query._2).map(r ⇒ queryResults :+ (query._1 -> r))
+          c.sendQuery(query._2).map(r ⇒ queryResults :+ (query._1 → r))
         } else {
           c.sendQuery(query._2).map(r ⇒ queryResults)
         }

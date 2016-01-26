@@ -2,7 +2,7 @@ package mypipe.api.event
 
 import java.util.UUID
 
-import mypipe.api.data.{ Row, Table }
+import mypipe.api.data.{Row, Table}
 
 sealed abstract class Event
 
@@ -45,10 +45,11 @@ sealed abstract class Mutation(override val table: Table, val txid: UUID, val ti
  *  @param rows which are changed by the mutation
  */
 abstract class SingleValuedMutation(
-  override val table: Table,
-  val rows: List[Row],
+  override val table:     Table,
+  val rows:               List[Row],
   override val timestamp: java.lang.Long,
-  override val txid: UUID = null)
+  override val txid:      UUID           = null
+)
     extends Mutation(table, txid, timestamp)
 
 object SingleValuedMutation {
@@ -67,10 +68,11 @@ object SingleValuedMutation {
  *  @param rows which are changed by the mutation
  */
 case class InsertMutation(
-  override val table: Table,
-  override val rows: List[Row],
+  override val table:     Table,
+  override val rows:      List[Row],
   override val timestamp: java.lang.Long,
-  override val txid: UUID = null)
+  override val txid:      UUID           = null
+)
     extends SingleValuedMutation(table, rows, timestamp, txid) {
 
   override def txAware(txid: UUID = null): Mutation = {
@@ -83,10 +85,11 @@ case class InsertMutation(
  *  @param rows changes rows
  */
 case class UpdateMutation(
-  override val table: Table,
-  rows: List[(Row, Row)],
+  override val table:     Table,
+  rows:                   List[(Row, Row)],
   override val timestamp: java.lang.Long,
-  override val txid: UUID = null)
+  override val txid:      UUID             = null
+)
     extends Mutation(table, txid, timestamp) {
 
   override def txAware(txid: UUID = null): Mutation = {
@@ -100,10 +103,11 @@ case class UpdateMutation(
  *  @param rows which are changed by the mutation
  */
 case class DeleteMutation(
-  override val table: Table,
-  override val rows: List[Row],
+  override val table:     Table,
+  override val rows:      List[Row],
   override val timestamp: java.lang.Long,
-  override val txid: UUID = null)
+  override val txid:      UUID           = null
+)
     extends SingleValuedMutation(table, rows, timestamp, txid) {
 
   override def txAware(txid: UUID = null): Mutation = {

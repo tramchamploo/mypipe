@@ -1,6 +1,6 @@
 package mypipe.kafka
 
-import kafka.producer.{ Producer ⇒ KProducer, ProducerConfig }
+import kafka.producer.{Producer ⇒ KProducer, ProducerConfig}
 
 import java.util.Properties
 import kafka.producer.KeyedMessage

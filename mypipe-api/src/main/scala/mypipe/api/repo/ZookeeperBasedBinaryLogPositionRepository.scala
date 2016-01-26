@@ -8,7 +8,7 @@ import org.apache.curator.retry.RetryUntilElapsed
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
-import scala.util.{ Failure, Try }
+import scala.util.{Failure, Try}
 
 /** Created by tramchamploo on 15/12/3.
  */
@@ -18,8 +18,10 @@ class ZookeeperBasedBinaryLogPositionRepository(pathPrefix: String, zkConn: Stri
 
   protected val log = LoggerFactory.getLogger(getClass)
 
-  lazy val zkClient = CuratorFrameworkFactory.newClient(zkConn,
-    new RetryUntilElapsed(maxRetry.toMillis.toInt, 1000))
+  lazy val zkClient = CuratorFrameworkFactory.newClient(
+    zkConn,
+    new RetryUntilElapsed(maxRetry.toMillis.toInt, 1000)
+  )
 
   zkClient.start()
 
@@ -72,6 +74,7 @@ class ConfigurableZookeeperBasedBinaryLogPositionRepository(override val config:
   extends ZookeeperBasedBinaryLogPositionRepository(
     config.getString("path-prefix"),
     config.getString("conn"),
-    config.getInt("max-retry-seconds").seconds)
+    config.getInt("max-retry-seconds").seconds
+  )
   with ConfigurableBinaryLogPositionRepository
 

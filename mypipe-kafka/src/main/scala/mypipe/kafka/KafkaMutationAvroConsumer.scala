@@ -10,15 +10,18 @@ import org.apache.avro.specific.SpecificRecord
 import mypipe.avro.AvroVersionedRecordDeserializer
 
 abstract class KafkaMutationAvroConsumer[InsertMutationType <: SpecificRecord, UpdateMutationType <: SpecificRecord, DeleteMutationType <: SpecificRecord, SchemaId](
-  topic: String,
-  zkConnect: String,
-  groupId: String,
-  schemaIdSizeInBytes: Int)(insertCallback: (InsertMutationType) ⇒ Boolean,
-                            updateCallback: (UpdateMutationType) ⇒ Boolean,
-                            deleteCallback: (DeleteMutationType) ⇒ Boolean,
-                            implicit val insertTag: TypeTag[InsertMutationType],
-                            implicit val updateTag: TypeTag[UpdateMutationType],
-                            implicit val deletetag: TypeTag[DeleteMutationType])
+  topic:               String,
+  zkConnect:           String,
+  groupId:             String,
+  schemaIdSizeInBytes: Int
+)(
+  insertCallback:         (InsertMutationType) ⇒ Boolean,
+  updateCallback:         (UpdateMutationType) ⇒ Boolean,
+  deleteCallback:         (DeleteMutationType) ⇒ Boolean,
+  implicit val insertTag: TypeTag[InsertMutationType],
+  implicit val updateTag: TypeTag[UpdateMutationType],
+  implicit val deletetag: TypeTag[DeleteMutationType]
+)
     extends KafkaConsumer(topic, zkConnect, groupId) {
 
   // abstract fields and methods

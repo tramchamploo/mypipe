@@ -3,7 +3,7 @@ package mypipe.api.repo
 import scala.concurrent.duration._
 import scala.concurrent.Await
 import com.github.mauricio.async.db.mysql.MySQLConnection
-import com.github.mauricio.async.db.{ Connection, Configuration }
+import com.github.mauricio.async.db.{Connection, Configuration}
 import com.typesafe.config.Config
 import mypipe.api.HostPortUserPass
 import mypipe.api.consumer.BinaryLogConsumer
@@ -77,6 +77,7 @@ class ConfigurableMySQLBasedBinaryLogPositionRepository(override val config: Con
     config.getString("id"),
     config.getString("source"),
     config.getString("database"),
-    config.getString("table"))
+    config.getString("table")
+  )
   with ConfigurableBinaryLogPositionRepository
 

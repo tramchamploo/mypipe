@@ -1,7 +1,7 @@
 package mypipe.snapshotter
 
 import com.github.mauricio.async.db.Connection
-import com.typesafe.config.{ Config, ConfigFactory }
+import com.typesafe.config.{Config, ConfigFactory}
 import mypipe.api.consumer.BinaryLogConsumer
 import mypipe.api.producer.Producer
 import mypipe.mysql.Db

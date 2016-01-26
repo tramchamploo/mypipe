@@ -3,13 +3,13 @@ package mypipe.mysql
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import mypipe.api.data.{ ColumnMetadata, PrimaryKey, Table }
+import mypipe.api.data.{ColumnMetadata, PrimaryKey, Table}
 import mypipe.api.event.TableMapEvent
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 /** A cache for tables whose metadata needs to be looked up against
  *  the database in order to determine column and key structure.
@@ -62,8 +62,8 @@ class TableCache(val hostname: String, val port: Int, val username: String, val 
 
       lookupTable(tableId, database, tableName) map {
         case Some(t) ⇒
-          tablesById += tableId -> t
-          tableNameToId += (t.db + t.name) -> t.id
+          tablesById += tableId → t
+          tableNameToId += (t.db + t.name) → t.id
           Some(t)
         case None ⇒ None
       }
@@ -75,7 +75,7 @@ class TableCache(val hostname: String, val port: Int, val username: String, val 
           lookupTable(tableId, database, tableName) andThen {
             case Success(t) ⇒
               val tt = t.get
-              tableNameToId += (tt.db + tt.name) -> tt.id; tablesById += tableId -> tt
+              tableNameToId += (tt.db + tt.name) → tt.id; tablesById += tableId → tt
             case Failure(_) ⇒
           }
       }

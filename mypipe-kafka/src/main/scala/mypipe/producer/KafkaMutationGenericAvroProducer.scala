@@ -1,14 +1,14 @@
 package mypipe.producer
 
-import java.lang.{ Long ⇒ JLong }
+import java.lang.{Long ⇒ JLong}
 import java.sql.Timestamp
-import java.util.{ HashMap ⇒ JMap }
+import java.util.{HashMap ⇒ JMap}
 
 import com.typesafe.config.Config
-import mypipe.api.data.{ Column, ColumnType }
+import mypipe.api.data.{Column, ColumnType}
 import mypipe.api.event._
 import mypipe.avro.schema.AvroSchemaUtils
-import mypipe.avro.{ AvroVersionedRecordSerializer, GenericInMemorySchemaRepo }
+import mypipe.avro.{AvroVersionedRecordSerializer, GenericInMemorySchemaRepo}
 import mypipe.kafka.KafkaUtil
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericData
@@ -77,11 +77,13 @@ class KafkaMutationGenericAvroProducer(config: Config)
     }
   }
 
-  protected def body(record: GenericData.Record,
-                     mutation: Mutation,
-                     integers: JMap[CharSequence, Integer],
-                     strings: JMap[CharSequence, CharSequence],
-                     longs: JMap[CharSequence, JLong])(implicit keyOp: String ⇒ String = s ⇒ s) {
+  protected def body(
+    record:   GenericData.Record,
+    mutation: Mutation,
+    integers: JMap[CharSequence, Integer],
+    strings:  JMap[CharSequence, CharSequence],
+    longs:    JMap[CharSequence, JLong]
+  )(implicit keyOp: String ⇒ String = s ⇒ s) {
     record.put(keyOp("integers"), integers)
     record.put(keyOp("strings"), strings)
     record.put(keyOp("longs"), longs)

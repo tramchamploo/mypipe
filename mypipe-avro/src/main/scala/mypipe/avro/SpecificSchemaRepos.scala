@@ -1,8 +1,7 @@
-package mypipe.producer
+package mypipe.avro
 
 import mypipe.api.event.Mutation
-import mypipe.avro.schema.{ AvroSchema, AvroSchemaUtils, ShortSchemaId }
-import mypipe.avro._
+import mypipe.avro.schema.{AvroSchema, AvroSchemaUtils, ShortSchemaId}
 import org.apache.avro.Schema
 
 /** Created by guohang.bao on 16/1/22.

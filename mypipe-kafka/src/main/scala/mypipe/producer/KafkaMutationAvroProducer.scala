@@ -3,18 +3,18 @@ package mypipe.producer
 import java.nio.ByteBuffer
 
 import mypipe.api._
-import mypipe.api.event.{ SingleValuedMutation, AlterEvent, Serializer, Mutation }
+import mypipe.api.event.{SingleValuedMutation, AlterEvent, Serializer, Mutation}
 import mypipe.api.producer.Producer
 import mypipe.avro.Guid
 import mypipe.kafka.KafkaProducer
 import com.typesafe.config.Config
-import mypipe.avro.schema.{ GenericSchemaRepository }
+import mypipe.avro.schema.{GenericSchemaRepository}
 import org.apache.avro.specific.SpecificRecord
 import org.apache.avro.Schema
-import org.apache.avro.generic.{ GenericRecord, GenericDatumWriter, GenericData }
+import org.apache.avro.generic.{GenericRecord, GenericDatumWriter, GenericData}
 import org.apache.avro.io.EncoderFactory
 import java.io.ByteArrayOutputStream
-import mypipe.kafka.{ PROTO_MAGIC_V0 }
+import mypipe.kafka.{PROTO_MAGIC_V0}
 import org.slf4j.LoggerFactory
 
 /** The base class for a Mypipe producer that encodes Mutation instances

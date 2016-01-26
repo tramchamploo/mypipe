@@ -6,15 +6,17 @@ import mypipe.util.Listenable
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 /** Created by guohang.bao on 15/12/14.
  */
-abstract class HeartBeat(hostname: String,
-                         port: Int,
-                         username: String,
-                         password: String,
-                         initialDelay: FiniteDuration = Duration.Zero) extends Listenable {
+abstract class HeartBeat(
+  hostname:     String,
+  port:         Int,
+  username:     String,
+  password:     String,
+  initialDelay: FiniteDuration = Duration.Zero
+) extends Listenable {
 
   val system = ActorSystem("mypipe-heartbeat")
   implicit val ec = system.dispatcher

@@ -3,19 +3,19 @@ package mypipe.mysql
 import java.util.concurrent.TimeUnit
 
 import com.github.shyiko.mysql.binlog.BinaryLogClient
-import com.github.shyiko.mysql.binlog.BinaryLogClient.{ EventListener, LifecycleListener }
+import com.github.shyiko.mysql.binlog.BinaryLogClient.{EventListener, LifecycleListener}
 import com.github.shyiko.mysql.binlog.event.EventType._
-import com.github.shyiko.mysql.binlog.event.{ Event ⇒ MEvent, _ }
+import com.github.shyiko.mysql.binlog.event.{Event ⇒ MEvent, _}
 import mypipe.api.consumer.AbstractBinaryLogConsumer
-import mypipe.api.data.{ Column, Row, Table, UnknownTable }
-import mypipe.api.event.{ Event, _ }
+import mypipe.api.data.{Column, Row, Table, UnknownTable}
+import mypipe.api.event.{Event, _}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.ListMap
 import scala.compat.Platform
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.util.{ Failure, Try }
+import scala.util.{Failure, Try}
 
 abstract class AbstractMySQLBinaryLogConsumer
     extends AbstractBinaryLogConsumer[MEvent]
@@ -58,7 +58,8 @@ abstract class AbstractMySQLBinaryLogConsumer
       tableMapEventData.getTableId,
       tableMapEventData.getTable,
       tableMapEventData.getDatabase,
-      tableMapEventData.getColumnTypes))
+      tableMapEventData.getColumnTypes
+    ))
   }
 
   protected def decodeQueryEvent(event: MEvent): Option[QueryEvent] = {
@@ -187,7 +188,7 @@ abstract class AbstractMySQLBinaryLogConsumer
 
       // zip the names and values from the table's columns and the row's data and
       // create a map that contains column names to Column objects with values
-      val cols = table.columns.zip(evRow).map(c ⇒ c._1.name -> Column(c._1, c._2))
+      val cols = table.columns.zip(evRow).map(c ⇒ c._1.name → Column(c._1, c._2))
       val columns = ListMap.empty[String, Column] ++ cols.toArray
 
       Row(table, columns)
@@ -200,8 +201,8 @@ abstract class AbstractMySQLBinaryLogConsumer
 
       // zip the names and values from the table's columns and the row's data and
       // create a map that contains column names to Column objects with values
-      val old = ListMap.empty[String, Column] ++ table.columns.zip(evRow.getKey).map(c ⇒ c._1.name -> Column(c._1, c._2))
-      val cur = ListMap.empty[String, Column] ++ table.columns.zip(evRow.getValue).map(c ⇒ c._1.name -> Column(c._1, c._2))
+      val old = ListMap.empty[String, Column] ++ table.columns.zip(evRow.getKey).map(c ⇒ c._1.name → Column(c._1, c._2))
+      val cur = ListMap.empty[String, Column] ++ table.columns.zip(evRow.getValue).map(c ⇒ c._1.name → Column(c._1, c._2))
 
       (Row(table, old), Row(table, cur))
 

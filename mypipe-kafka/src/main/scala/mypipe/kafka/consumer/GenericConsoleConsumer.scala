@@ -2,12 +2,12 @@ package mypipe.kafka.consumer
 
 import mypipe.api.event.Mutation
 import mypipe.avro.GenericInMemorySchemaRepo
-import mypipe.avro.schema.{ GenericSchemaRepository, AvroSchemaUtils }
+import mypipe.avro.schema.{GenericSchemaRepository, AvroSchemaUtils}
 import mypipe.kafka.KafkaGenericMutationAvroConsumer
 import org.apache.avro.Schema
 
 import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Await, Future }
+import scala.concurrent.{ExecutionContext, Await, Future}
 import ExecutionContext.Implicits.global
 
 class GenericConsoleConsumer(topic: String, zkConnect: String, groupId: String) {
@@ -19,22 +19,24 @@ class GenericConsoleConsumer(topic: String, zkConnect: String, groupId: String) 
     topic = topic,
     zkConnect = zkConnect,
     groupId = groupId,
-    schemaIdSizeInBytes = 2)(
+    schemaIdSizeInBytes = 2
+  )(
 
     insertCallback = { insertMutation ⇒
-      println(insertMutation)
-      true
-    },
+    println(insertMutation)
+    true
+  },
 
     updateCallback = { updateMutation ⇒
-      println(updateMutation)
-      true
-    },
+    println(updateMutation)
+    true
+  },
 
     deleteCallback = { deleteMutation ⇒
-      println(deleteMutation)
-      true
-    }) {
+    println(deleteMutation)
+    true
+  }
+  ) {
 
     protected val schemaRepoClient: GenericSchemaRepository[Short, Schema] = GenericInMemorySchemaRepo
     override def bytesToSchemaId(bytes: Array[Byte], offset: Int): Short = byteArray2Short(bytes, offset)
