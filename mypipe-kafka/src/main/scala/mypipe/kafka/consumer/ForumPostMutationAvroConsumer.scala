@@ -45,7 +45,7 @@ abstract class ForumPostMutationAvroConsumer(zkConnect: String, groupId: String)
     implicitly[TypeTag[ForumPostDelete]]
   ) {
 
-    protected val schemaRepoClient: GenericSchemaRepository[Short, Schema] = GenericInMemorySchemaRepo
+    protected val schemaRepoClient: GenericSchemaRepository[Short, Schema] = ForumPostSchemaRepo
 
     override def bytesToSchemaId(bytes: Array[Byte], offset: Int): Short = byteArray2Short(bytes, offset)
     private def byteArray2Short(data: Array[Byte], offset: Int) = ((data(offset) << 8) | (data(offset + 1) & 0xff)).toShort

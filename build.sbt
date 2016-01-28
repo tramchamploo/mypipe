@@ -2,7 +2,7 @@ import Dependencies._
 
 lazy val commonSettings = Seq(
   name := "mypipe",
-  version := "0.0.3-SNAPSHOT",
+  version := "0.0.4-SNAPSHOT",
   organization := "mypipe",
   scalaVersion := "2.11.7",
   exportJars := true,
