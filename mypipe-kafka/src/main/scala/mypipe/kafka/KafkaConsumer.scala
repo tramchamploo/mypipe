@@ -76,7 +76,7 @@ class KafkaIterator(topic: String, zkConnect: String, groupId: String) {
     val props = new Properties()
     props.put("zookeeper.connect", zkConnect)
     props.put("group.id", groupId)
-    props.put("zookeeper.session.timeout.ms", "400")
+    props.put("zookeeper.session.timeout.ms", "2000")
     props.put("zookeeper.sync.time.ms", "200")
     props.put("auto.commit.interval.ms", "1000")
     KConsumer.create(new ConsumerConfig(props))
